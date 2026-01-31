@@ -1,0 +1,51 @@
+{% extends 'core\base.html' %}
+{% load static %}
+{% block content %}
+
+<main class="main">
+    <nav aria-label="breadcrumb" class="breadcrumb-nav">
+        <div class="container">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="demo4.html"><i class="icon-home"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Blog</li>
+            </ol>
+        </div><!-- End .container -->
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9">
+                <div class="blog-section row">
+                    {% for post in posts %}
+                    <div class="col-md-6 col-lg-4">
+                        <article class="post">
+                            <div class="post-media">
+                                <a href="#">
+                                    <img src="{{ post.image.url }}" alt="Post" width="225" height="280">
+                                </a>
+                                <div class="post-date">
+                                    <span class="day">{{post.day}}</span>
+                                    <span class="month">{{post.month|date:"M"}}</span>
+                                </div>
+                            </div><!-- End .post-media -->
+
+                            <div class="post-body">
+                                <h2 class="post-title">
+                                    <a href="#">{{ post.title }}</a>
+                                </h2>
+                                <div class="post-content">
+                                    <p>{{post.content}}...</p>
+                                </div><!-- End .post-content -->
+                                <a href="single.html" class="post-comment">0 Comments</a>
+                            </div><!-- End .post-body -->
+                        </article><!-- End .post -->
+                    </div>
+                    {% endfor %}
+                </div>
+            </div><!-- End .col-lg-9 -->
+            {% include 'blog_sidebar.html' %}
+        </div><!-- End .row -->
+    </div><!-- End .container -->
+</main><!-- End .main -->
+
+{% endblock %}
