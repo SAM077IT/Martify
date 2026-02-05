@@ -33,9 +33,9 @@ The project focuses on clean architecture, scalability, and real-world eCommerce
 
 - **Backend:** Python, Django
 - **Frontend:** Django Templates, HTML, CSS (Tailwind/Bootstrap planned)
-- **Database:** SQLite (development), PostgreSQL (production-ready)
+- **Database:** MySQL (development & production-ready)
 - **Authentication:** Django Auth
-- **Payments:** Stripe
+- **Payments:** Stripe (planned)
 - **Caching:** Redis (planned)
 - **Task Queue:** Celery (planned)
 - **Deployment:** Docker, Gunicorn (planned)
