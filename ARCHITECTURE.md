@@ -19,17 +19,24 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 ### Core Apps
 
 #### `core`
-**Purpose:** Homepage, base utilities, and product catalog foundation
+**Purpose:** Homepage, base utilities, product catalog, and templatetags
 
 **Key Models:**
 - `Category`: Product categories with images
 - `Tag`: Product tags for filtering
-- `Product`: Main product entity with pricing, images, SKU, description
+- `Product`: Main product entity with pricing, images, SKU, description, and `sale_price` property
 
 **Responsibilities:**
-- Serves the homepage
+- Serves the homepage (`IndexView`)
+- Product catalog (`ShopView`, `CategoryView`, `ProductView`)
 - Provides base templates and context processors
-- Product and category data models
+- Custom template tags and filters (`core_tags`)
+- Static pages (contact, about, etc.)
+
+**Important Files:**
+- `templatetags/core_tags.py`: Custom template filter `underscore` for URL name conversion
+- `views.py`: Class-based views for all core pages
+- `urls.py`: URL routing for product, category, and static pages
 
 ---
 
@@ -163,23 +170,28 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 ## Database Schema Overview
 
 ### Core Tables
-- `core_category`
-- `core_tag`
-- `core_product` (FK to Category, Tag)
+- `core_category`: Product categories with image
+- `core_tag`: Product tags for filtering
+- `core_product`: Main product entity with:
+  - Pricing fields (price, off_percent, computed sale_price property)
+  - Images (main, secondary)
+  - Foreign keys: category, tag
+  - SKU, description, created_at
 
 ### Cart Tables
-- `cart_cart` (linked to user/session)
-- `cart_cartitem` (FK to Cart, Product)
+- `cart_cart`: Session-based or user-associated cart
+- `cart_cartitem`: Line items linking Cart → Product with quantity
 
 ### Order Tables
-- `orders_order` (FK to user, shipping/billing addresses)
-- `orders_orderitem` (FK to Order, Product)
+- `orders_order`: Customer orders with status, total, timestamps
+- `orders_orderitem`: Order line items (FK to Order, Product)
 
 ### Supporting Tables
-- `coupons_coupon`
-- `payments_payment` (FK to Order)
-- `wishlist_wishlist` (FK to user, Product)
-- `blog_blog`
+- `coupons_coupon`: Discount codes with validity, discount type, usage tracking
+- `payments_payment`: Payment transactions (FK to Order)
+- `wishlist_wishlist`: User saved products
+- `blog_blog`: Blog posts with categories, content, metadata
+- `users_<custom>`: Custom user model if implemented
 
 ---
 
@@ -237,11 +249,20 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 templates/
 ├── base.html (main layout)
 ├── core/
-│   ├── index.html
-│   ├── product_detail.html
-│   └── category_view.html
+│   ├── index.html (homepage)
+│   ├── category.html (shop page with product grid)
+│   ├── product.html (product detail with related products)
+│   ├── page_about.html (about us page - renamed from inabout.html)
+│   ├── contact.html (contact form)
+│   ├── err404.html (404 error page)
+│   ├── featured_products.html
+│   ├── new_arrivals.html
+│   ├── category-list.html (list view variant)
+│   ├── single.html
+│   ├── index_blogs.html
+│   └── index_categories.html
 ├── cart/
-│   └── cart_detail.html
+│   └── cart.html
 ├── orders/
 │   ├── checkout.html
 │   └── order_complete.html
