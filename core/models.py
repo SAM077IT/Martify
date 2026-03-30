@@ -36,5 +36,12 @@ class Product(models.Model):
     created_at = models.DateField(default=datetime.date.today)
     description = models.TextField(blank=True, null=True)
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
+
+    @property
+    def sale_price(self):
+        """Calculate the sale price if off_percent is set."""
+        if self.off_percent and self.off_percent > 0:
+            return round(self.price * (1 - self.off_percent / 100), 2)
+        return None

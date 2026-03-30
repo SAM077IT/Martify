@@ -1,5 +1,6 @@
-{% extends 'core\base.html' %}
+{% extends 'core/base.html' %}
 {% load static %}
+{% load core_tags %}
 {% block content %}
 
 
@@ -113,10 +114,12 @@
                     <div class="col-6 col-sm-4">
                         <div class="product-default">
                             <figure>
-                                <a href="product.html">
+                                <a href="{% url 'shop_product' product.name|underscore %}">
                                     <img src="{{ product.image.url }}" width="280" height="280" alt="product" />
+                                    {% if product.image_secondry %}
                                     <img src="{{ product.image_secondry.url }}" width="280" height="280"
                                         alt="product" />
+                                    {% endif %}
                                 </a>
 
                                 <div class="label-group">
@@ -128,11 +131,11 @@
                             <div class="product-details">
                                 <div class="category-wrap">
                                     <div class="category-list">
-                                        <a href="category.html" class="product-category">category</a>
+                                        <a href="{% url 'shop_with_category' product.category.name %}" class="product-category">{{ product.category.name }}</a>
                                     </div>
                                 </div>
 
-                                <h3 class="product-title"> <a href="product.html">{{ product.name }}</a> </h3>
+                                <h3 class="product-title"> <a href="{% url 'shop_product' product.name|underscore %}">{{ product.name }}</a> </h3>
 
                                 <div class="ratings-container">
                                     <div class="product-ratings">
@@ -154,7 +157,7 @@
                                     <a href="{% url 'wishlist_page' %}" class="btn-icon-wish"
                                         data-product-id="{{ product.id }}" title="wishlist"><i
                                             class="icon-heart"></i></a>
-                                    <a href="product.html" class="btn-icon btn-add-cart"><i
+                                    <a href="{% url 'shop_product' product.name|underscore %}" class="btn-icon btn-add-cart"><i
                                             class="fa fa-arrow-right"></i><span>SELECT
                                             OPTIONS</span></a>
                                     <a href="ajax/product-quick-view.html" class="btn-quickview" title="Quick View"><i
@@ -371,7 +374,7 @@
                                 <div class="featured-col">
                                     <div class="product-default left-details product-widget">
                                         <figure>
-                                            <a href="product.html">
+                                            <a href="{% url 'shop_product' 'Blue Backpack for the Young - S'|underscore %}">
                                                 <img src="assets/images/products/small/product-4.jpg" width="75"
                                                     height="75" alt="product" />
                                                 <img src="assets/images/products/small/product-4-2.jpg" width="75"
@@ -379,7 +382,7 @@
                                             </a>
                                         </figure>
                                         <div class="product-details">
-                                            <h3 class="product-title"> <a href="product.html">Blue Backpack for
+                                            <h3 class="product-title"> <a href="{% url 'shop_product' 'Blue Backpack for the Young - S'|underscore %}">Blue Backpack for
                                                     the Young - S</a> </h3>
                                             <div class="ratings-container">
                                                 <div class="product-ratings">
@@ -399,7 +402,7 @@
                                     </div>
                                     <div class="product-default left-details product-widget">
                                         <figure>
-                                            <a href="product.html">
+                                            <a href="{% url 'shop_product' 'Casual Spring Blue Shoes'|underscore %}">
                                                 <img src="assets/images/products/small/product-5.jpg" width="75"
                                                     height="75" alt="product" />
                                                 <img src="assets/images/products/small/product-5-2.jpg" width="75"
@@ -407,7 +410,7 @@
                                             </a>
                                         </figure>
                                         <div class="product-details">
-                                            <h3 class="product-title"> <a href="product.html">Casual Spring Blue
+                                            <h3 class="product-title"> <a href="{% url 'shop_product' 'Casual Spring Blue Shoes'|underscore %}">Casual Spring Blue
                                                     Shoes</a> </h3>
                                             <div class="ratings-container">
                                                 <div class="product-ratings">
@@ -427,7 +430,7 @@
                                     </div>
                                     <div class="product-default left-details product-widget">
                                         <figure>
-                                            <a href="product.html">
+                                            <a href="{% url 'shop_product' 'Men Black Gentle Belt'|underscore %}">
                                                 <img src="assets/images/products/small/product-6.jpg" width="75"
                                                     height="75" alt="product" />
                                                 <img src="assets/images/products/small/product-6-2.jpg" width="75"
@@ -435,7 +438,7 @@
                                             </a>
                                         </figure>
                                         <div class="product-details">
-                                            <h3 class="product-title"> <a href="product.html">Men Black Gentle
+                                            <h3 class="product-title"> <a href="{% url 'shop_product' 'Men Black Gentle Belt'|underscore %}">Men Black Gentle
                                                     Belt</a> </h3>
                                             <div class="ratings-container">
                                                 <div class="product-ratings">
@@ -459,7 +462,7 @@
                                 <div class="featured-col">
                                     <div class="product-default left-details product-widget">
                                         <figure>
-                                            <a href="product.html">
+                                            <a href="{% url 'shop_product' 'Ultimate 3D Bluetooth Speaker'|underscore %}">
                                                 <img src="assets/images/products/small/product-1.jpg" width="75"
                                                     height="75" alt="product" />
                                                 <img src="assets/images/products/small/product-1-2.jpg" width="75"
@@ -467,7 +470,7 @@
                                             </a>
                                         </figure>
                                         <div class="product-details">
-                                            <h3 class="product-title"> <a href="product.html">Ultimate 3D
+                                            <h3 class="product-title"> <a href="{% url 'shop_product' 'Ultimate 3D Bluetooth Speaker'|underscore %}">Ultimate 3D
                                                     Bluetooth Speaker</a> </h3>
                                             <div class="ratings-container">
                                                 <div class="product-ratings">
@@ -487,7 +490,7 @@
                                     </div>
                                     <div class="product-default left-details product-widget">
                                         <figure>
-                                            <a href="product.html">
+                                            <a href="{% url 'shop_product' 'Brown Women Casual HandBag'|underscore %}">
                                                 <img src="assets/images/products/small/product-2.jpg" width="75"
                                                     height="75" alt="product" />
                                                 <img src="assets/images/products/small/product-2-2.jpg" width="75"
@@ -495,7 +498,7 @@
                                             </a>
                                         </figure>
                                         <div class="product-details">
-                                            <h3 class="product-title"> <a href="product.html">Brown Women Casual
+                                            <h3 class="product-title"> <a href="{% url 'shop_product' 'Brown Women Casual HandBag'|underscore %}">Brown Women Casual
                                                     HandBag</a> </h3>
                                             <div class="ratings-container">
                                                 <div class="product-ratings">
@@ -515,7 +518,7 @@
                                     </div>
                                     <div class="product-default left-details product-widget">
                                         <figure>
-                                            <a href="product.html">
+                                            <a href="{% url 'shop_product' 'Circled Ultimate 3D Speaker'|underscore %}">
                                                 <img src="assets/images/products/small/product-3.jpg" width="75"
                                                     height="75" alt="product" />
                                                 <img src="assets/images/products/small/product-3-2.jpg" width="75"
@@ -523,7 +526,7 @@
                                             </a>
                                         </figure>
                                         <div class="product-details">
-                                            <h3 class="product-title"> <a href="product.html">Circled Ultimate
+                                            <h3 class="product-title"> <a href="{% url 'shop_product' 'Circled Ultimate 3D Speaker'|underscore %}">Circled Ultimate
                                                     3D Speaker</a> </h3>
                                             <div class="ratings-container">
                                                 <div class="product-ratings">
