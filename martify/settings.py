@@ -42,6 +42,10 @@ INSTALLED_APPS = [
     'blog',
     'users',
     'wishlist',
+    'cart',
+    'coupons',
+    'orders',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -83,7 +87,7 @@ DATABASES = {
         'NAME': 'martify',
         'HOST': 'localhost',
         'USER': 'root',
-        'PASSWORD': 'Sami@1995'
+        'PASSWORD': 'new_password'
     }
 }
 

@@ -1,4 +1,4 @@
-{% extends 'core\base.html' %}
+{% extends 'core/base.html' %}
 {% load static %}
 {% block content %}
 <main class="main">
@@ -7,8 +7,8 @@
             <nav aria-label="breadcrumb" class="breadcrumb-nav">
                 <div class="container">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="demo4.html">Home</a></li>
-                        <li class="breadcrumb-item"><a href="category.html">Shop</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop' %}">Shop</a></li>
                         <li class="breadcrumb-item active" aria-current="page">
                             My Account
                         </li>

@@ -32,8 +32,8 @@ class Login(View):
         return render(request, "login.html", context={})
 
     def post(self, request):
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
@@ -52,7 +52,7 @@ class Logout(View):
 
 
 class Dashboard(LoginRequiredMixin, View):
-    login_url = '/user/login/'
+    login_url = '/login/'
     redirect_field_name = 'login'
 
     def get(self, request):
