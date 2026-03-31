@@ -41,17 +41,36 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 ---
 
 #### `cart`
-**Purpose:** Shopping cart management
+**Purpose:** Shopping cart management with hybrid session/database persistence
 
 **Key Models:**
-- `Cart`: Session-based cart storage
+- `Cart`: Persistent cart storage linked to authenticated users (OneToOne with User)
 - `CartItem`: Individual items in a cart
 
+**Key Classes:**
+- `SessionCart` (`cart/cart.py`): Session-based cart for all users (guests + authenticated)
+- `utils.py`: Synchronization utilities (`sync_cart_to_db()`, `load_db_cart_into_session()`)
+- `signals.py`: Authentication signal handlers for automatic cart sync
+
 **Responsibilities:**
-- Add/remove/update cart items
-- Calculate cart totals
-- Support both session-based and persistent carts
-- Coupon application logic
+- Add/remove/update cart items via session storage
+- Calculate cart totals and discounts
+- Support both session-based (guests) and persistent carts (authenticated users)
+- Automatic synchronization between session and database:
+  - **On login**: Merge guest session cart with existing DB cart, synchronize DB, reload session
+  - **During session**: Real-time sync for logged-in users after every cart operation
+  - **On logout**: No action needed (DB already current)
+  - **Empty cart cleanup**: Delete DB cart when empty
+- Coupon application logic (via coupon ID in session)
+
+**Files:**
+- `cart.py`: SessionCart implementation
+- `utils.py`: Cart synchronization utilities
+- `signals.py`: `user_logged_in` and `user_logged_out` signal handlers
+- `apps.py`: Registers signal handlers in `ready()` method
+- `views.py`: Cart add/remove/clear with automatic sync for authenticated users
+- `context_processors.py`: `cart_context` provides global cart access (via `core/context_processors.py`)
+- `templatetags/core_tags.py`: `underscore` filter for product URL generation
 
 ---
 
@@ -179,8 +198,11 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
   - SKU, description, created_at
 
 ### Cart Tables
-- `cart_cart`: Session-based or user-associated cart
+- `cart_cart`: Persistent cart linked to authenticated user (OneToOne)
 - `cart_cartitem`: Line items linking Cart → Product with quantity
+- Session-based cart stored in `request.session['cart']` (non-persistent)
+
+**Note:** The database cart is synchronized to match the session cart for all authenticated users. Guests only use session storage.
 
 ### Order Tables
 - `orders_order`: Customer orders with status, total, timestamps
@@ -216,20 +238,53 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 2. Session established via Django auth middleware
 3. Redirect to homepage or intended destination
 
-### 2. Browse & Add to Cart
-1. User browses products from `core` app
-2. Add to cart → `cart` app creates/updates CartItem
-3. Cart stored in session and/or database
+### 2. Cart Persistence & Synchronization
+**Guest Shopping:**
+1. User (not logged in) adds items to cart → stored in session via `SessionCart`
+2. Cart persists across pages but not browser restarts
 
-### 3. Checkout Process
+**First Login with Existing Guest Cart:**
+1. User adds items as guest → session cart contains items
+2. User logs in → `user_logged_in` signal fires
+3. Existing DB cart (if any) is loaded into session → **merged** with guest items
+4. Combined session cart is **synchronized** to DB
+5. Session cart is cleared and **reloaded from DB** (ensures consistency)
+6. User now has persistent cart stored in database
+
+**Authenticated Shopping:**
+1. User is logged in and adds/removes items
+2. Every cart operation immediately syncs DB cart to match session (in the view)
+3. DB cart is always current (authoritative source)
+
+**Logout:**
+1. User logs out → `user_logged_out` signal fires
+2. DB cart already current from real-time sync → no action needed
+3. Session cart is cleared by Django's logout
+
+**Browser Close (No Logout):**
+- Cart remains in DB (synchronized from last operation)
+- User can see their cart next time they log in
+
+**Empty Cart Cleanup:**
+- When cart becomes empty (all items removed), DB cart is automatically deleted
+- Keeps database clean of unused empty carts
+
+### 3. Browse & Add to Cart (Normal Flow)
+1. User browses products from `core` app
+2. Add to cart → `cart/views.py:cart_add` uses `SessionCart`
+3. For logged-in users: `sync_cart_to_db()` updates DB in real-time
+4. Cart count badge updates dynamically via `{{ cart|length }}`
+
+### 4. Checkout Process
 1. User proceeds to checkout
 2. `orders` app creates Shipping/Billing addresses
 3. Coupon validation via `coupons` app
 4. Order creation from cart items
-5. Payment processing via `payments` app
-6. Order confirmation and email
+5. Cart is cleared (both session and DB)
+6. Payment processing via `payments` app (Stripe integration planned)
+7. Order confirmation and email
 
-### 4. Order Management
+### 5. Order Management
 1. Staff views orders via Django admin
 2. Order status updates
 3. Customer can view order history
@@ -243,31 +298,34 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 - Class-based views for most functionality
 - Django forms for validation
 - GET/POST pattern for form submissions
+- **Signal-based event handling**: Cart synchronization uses `user_logged_in`/`user_logged_out` signals
+- **Context processors**: Global cart access via `core/context_processors.py`
 
 ### Template Structure
 ```
 templates/
-├── base.html (main layout)
+├── base.html (main layout with dynamic cart dropdown)
 ├── core/
 │   ├── index.html (homepage)
 │   ├── category.html (shop page with product grid)
 │   ├── product.html (product detail with related products)
-│   ├── page_about.html (about us page - renamed from inabout.html)
+│   ├── page_about.html (about us page)
 │   ├── contact.html (contact form)
 │   ├── err404.html (404 error page)
-│   ├── featured_products.html
-│   ├── new_arrivals.html
 │   ├── category-list.html (list view variant)
-│   ├── single.html
-│   ├── index_blogs.html
-│   └── index_categories.html
+│   └── ... (other templates)
 ├── cart/
-│   └── cart.html
+│   └── cart.html (dynamic cart detail page with live totals)
 ├── orders/
 │   ├── checkout.html
 │   └── order_complete.html
 └── ... (per-app templates)
 ```
+
+**Key Template Features:**
+- **Global cart access**: All templates have access to `{{ cart }}` via context processor
+- **Dynamic cart count**: Header displays `{{ cart|length }}`
+- **Dynamic cart dropdown**: Base template iterates over cart items with product links
 
 ### Static Files
 ```
@@ -292,6 +350,7 @@ static/
 - Database: MySQL configured (localhost, root user)
 - Static and media URLs configured
 - INSTALLED_APPS includes all Django defaults + local apps
+- `CART_SESSION_ID = 'cart'`: Session key for storing cart data
 
 ### URLs
 - `martify/urls.py`: Main URL configuration
@@ -304,7 +363,14 @@ static/
 ### Implemented
 - User authentication (basic)
 - Product catalog with categories and tags
-- Shopping cart (session + DB)
+- **Shopping cart with hybrid persistence**:
+  - Session-based cart works for guests and authenticated users
+  - Database-backed cart automatically created for logged-in users
+  - **Automatic synchronization** between session and database on login/logout
+  - Real-time DB sync during session for logged-in users
+  - Guest cart merges with existing DB cart on first login
+  - Empty carts automatically deleted
+  - Global cart context processor for templates
 - Basic checkout flow
 - Order management
 - Blog functionality

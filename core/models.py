@@ -8,11 +8,11 @@ class Category(models.Model):
     image = models.ImageField(
         upload_to='uploads/category/', default="uploads/product/no-image.jpg")
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name_plural = 'categories'
+
+    def __str__(self):
+        return self.name
 
 
 class Tag(models.Model):

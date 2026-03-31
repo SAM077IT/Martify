@@ -1,4 +1,5 @@
 {% load static %}
+{% load core_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
@@ -157,6 +158,10 @@
                                     <div class="select-custom">
                                         <select id="cat" name="cat">
                                             <option value="">All Categories</option>
+                                            {% for category in categories %}
+                                            <option value="4">{{ category }}</option>
+                                            {% endfor %}
+                                            <!-- <option value="">All Categories</option>
                                             <option value="4">Fashion</option>
                                             <option value="12">- Women</option>
                                             <option value="13">- Men</option>
@@ -172,7 +177,7 @@
                                             <option value="32">- Motorcycles &amp; Powersports</option>
                                             <option value="33">- Parts &amp; Accessories</option>
                                             <option value="34">- Boats</option>
-                                            <option value="57">- Auto Tools &amp; Supplies</option>
+                                            <option value="57">- Auto Tools &amp; Supplies</option> -->
                                         </select>
                                     </div>
                                     <!-- End .select-custom -->
@@ -204,7 +209,7 @@
                             <a href="#" title="Cart" class="dropdown-toggle dropdown-arrow cart-toggle" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-display="static">
                                 <i class="minicart-icon"></i>
-                                <span class="cart-count badge-circle">3</span>
+                                <span class="cart-count badge-circle">{{ cart|length }}</span>
                             </a>
 
                             <div class="cart-overlay"></div>
@@ -217,80 +222,44 @@
                                     <!-- End .dropdown-cart-header -->
 
                                     <div class="dropdown-cart-products">
-                                        <div class="product">
-                                            <div class="product-details">
-                                                <h4 class="product-title">
-                                                    <a href="product.html">Ultimate 3D Bluetooth Speaker</a>
-                                                </h4>
+                                        {% for item in cart %}
+                                            <div class="product">
+                                                <div class="product-details">
+                                                    <h4 class="product-title">
+                                                        <a href="{% url 'shop_product' product=item.product.name|underscore %}">{{ item.product.name }}</a>
+                                                    </h4>
 
-                                                <span class="cart-product-info">
-                                                    <span class="cart-product-qty">1</span> × $99.00
-                                                </span>
+                                                    <span class="cart-product-info">
+                                                        <span class="cart-product-qty">{{ item.quantity }}</span> × ${{ item.price|floatformat:2 }}
+                                                    </span>
+                                                </div>
+                                                <!-- End .product-details -->
+
+                                                <figure class="product-image-container">
+                                                    <a href="{% url 'shop_product' product=item.product.name|underscore %}" class="product-image">
+                                                        {% if item.product.image %}
+                                                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
+                                                                width="80" height="80">
+                                                        {% else %}
+                                                            <img src="{% static 'assets/images/products/no-image.png' %}" alt="No image"
+                                                                width="80" height="80">
+                                                        {% endif %}
+                                                    </a>
+
+                                                    <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove" title="Remove Product"><span>×</span></a>
+                                                </figure>
                                             </div>
-                                            <!-- End .product-details -->
-
-                                            <figure class="product-image-container">
-                                                <a href="product.html" class="product-image">
-                                                    <img src="assets/images/products/product-1.jpg" alt="product"
-                                                        width="80" height="80">
-                                                </a>
-
-                                                <a href="#" class="btn-remove" title="Remove Product"><span>×</span></a>
-                                            </figure>
-                                        </div>
-                                        <!-- End .product -->
-
-                                        <div class="product">
-                                            <div class="product-details">
-                                                <h4 class="product-title">
-                                                    <a href="product.html">Brown Women Casual HandBag</a>
-                                                </h4>
-
-                                                <span class="cart-product-info">
-                                                    <span class="cart-product-qty">1</span> × $35.00
-                                                </span>
-                                            </div>
-                                            <!-- End .product-details -->
-
-                                            <figure class="product-image-container">
-                                                <a href="product.html" class="product-image">
-                                                    <img src="assets/images/products/product-2.jpg" alt="product"
-                                                        width="80" height="80">
-                                                </a>
-
-                                                <a href="#" class="btn-remove" title="Remove Product"><span>×</span></a>
-                                            </figure>
-                                        </div>
-                                        <!-- End .product -->
-
-                                        <div class="product">
-                                            <div class="product-details">
-                                                <h4 class="product-title">
-                                                    <a href="product.html">Circled Ultimate 3D Speaker</a>
-                                                </h4>
-
-                                                <span class="cart-product-info">
-                                                    <span class="cart-product-qty">1</span> × $35.00
-                                                </span>
-                                            </div>
-                                            <!-- End .product-details -->
-
-                                            <figure class="product-image-container">
-                                                <a href="product.html" class="product-image">
-                                                    <img src="assets/images/products/product-3.jpg" alt="product"
-                                                        width="80" height="80">
-                                                </a>
-                                                <a href="#" class="btn-remove" title="Remove Product"><span>×</span></a>
-                                            </figure>
-                                        </div>
-                                        <!-- End .product -->
+                                            <!-- End .product -->
+                                        {% empty %}
+                                            <p class="text-center">Your cart is empty</p>
+                                        {% endfor %}
                                     </div>
                                     <!-- End .cart-product -->
 
                                     <div class="dropdown-cart-total">
                                         <span>SUBTOTAL:</span>
 
-                                        <span class="cart-total-price float-right">$134.00</span>
+                                        <span class="cart-total-price float-right">${{ cart.total_price|floatformat:2 }}</span>
                                     </div>
                                     <!-- End .dropdown-cart-total -->
 

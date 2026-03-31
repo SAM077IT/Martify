@@ -5,6 +5,7 @@ from core.models import Product
 from .cart import SessionCart
 from .forms import CartAddProductForm
 from coupons.forms import CouponApplyForm
+from .utils import sync_cart_to_db
 
 
 def cart_detail(request):
@@ -28,6 +29,9 @@ def cart_add(request, product_id):
     if form.is_valid():
         cd = form.cleaned_data
         cart.add(product=product, quantity=cd['quantity'], override_quantity=cd['override'])
+        # Sync to database for logged-in users
+        if request.user.is_authenticated:
+            sync_cart_to_db(request.user, cart)
 
     # AJAX support
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -41,6 +45,9 @@ def cart_remove(request, product_id):
     cart = SessionCart(request)
     product = get_object_or_404(Product, id=product_id)
     cart.remove(product)
+    # Sync to database for logged-in users
+    if request.user.is_authenticated:
+        sync_cart_to_db(request.user, cart)
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'cart_count': len(cart), 'message': 'Removed from cart.'})
@@ -51,4 +58,7 @@ def cart_remove(request, product_id):
 def cart_clear(request):
     cart = SessionCart(request)
     cart.clear()
+    # Sync to database for logged-in users (will delete DB cart if empty)
+    if request.user.is_authenticated:
+        sync_cart_to_db(request.user, cart)
     return redirect('cart_detail')
