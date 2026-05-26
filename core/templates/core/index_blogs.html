@@ -23,7 +23,7 @@
     {% for blog in blogs %}
     <article class="post">
         <div class="post-media">
-            <a href="single.html">
+            <a href="{% url 'single_post' blog.slug %}">
                 <img src="{{ blog.image.url }}" alt="Post" width="225" height="280">
             </a>
             <div class="post-date">
@@ -35,13 +35,13 @@
 
         <div class="post-body">
             <h2 class="post-title">
-                <a href="single.html">{{ blog.title }}</a>
+                <a href="{% url 'single_post' blog.slug %}">{{ blog.title }}</a>
             </h2>
             <div class="post-content">
                 <p>{{ blog.content }}</p>
             </div>
             <!-- End .post-content -->
-            <a href="single.html" class="post-comment">0 Comments</a>
+            <a href="{% url 'single_post' blog.slug %}" class="post-comment">0 Comments</a>
         </div>
         <!-- End .post-body -->
     </article>

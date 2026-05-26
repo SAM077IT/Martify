@@ -223,35 +223,40 @@
 
                                     <div class="dropdown-cart-products">
                                         {% for item in cart %}
-                                            <div class="product">
-                                                <div class="product-details">
-                                                    <h4 class="product-title">
-                                                        <a href="{% url 'shop_product' product=item.product.name|underscore %}">{{ item.product.name }}</a>
-                                                    </h4>
+                                        <div class="product">
+                                            <div class="product-details">
+                                                <h4 class="product-title">
+                                                    <a
+                                                        href="{% url 'shop_product' product=item.product.name|underscore %}">{{
+                                                        item.product.name }}</a>
+                                                </h4>
 
-                                                    <span class="cart-product-info">
-                                                        <span class="cart-product-qty">{{ item.quantity }}</span> × ${{ item.price|floatformat:2 }}
-                                                    </span>
-                                                </div>
-                                                <!-- End .product-details -->
-
-                                                <figure class="product-image-container">
-                                                    <a href="{% url 'shop_product' product=item.product.name|underscore %}" class="product-image">
-                                                        {% if item.product.image %}
-                                                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
-                                                                width="80" height="80">
-                                                        {% else %}
-                                                            <img src="{% static 'assets/images/products/no-image.png' %}" alt="No image"
-                                                                width="80" height="80">
-                                                        {% endif %}
-                                                    </a>
-
-                                                    <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove" title="Remove Product"><span>×</span></a>
-                                                </figure>
+                                                <span class="cart-product-info">
+                                                    <span class="cart-product-qty">{{ item.quantity }}</span> × ${{
+                                                    item.price|floatformat:2 }}
+                                                </span>
                                             </div>
-                                            <!-- End .product -->
+                                            <!-- End .product-details -->
+
+                                            <figure class="product-image-container">
+                                                <a href="{% url 'shop_product' product=item.product.name|underscore %}"
+                                                    class="product-image">
+                                                    {% if item.product.image %}
+                                                    <img src="{{ item.product.image.url }}"
+                                                        alt="{{ item.product.name }}" width="80" height="80">
+                                                    {% else %}
+                                                    <img src="{% static 'assets/images/products/no-image.png' %}"
+                                                        alt="No image" width="80" height="80">
+                                                    {% endif %}
+                                                </a>
+
+                                                <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove"
+                                                    title="Remove Product"><span>×</span></a>
+                                            </figure>
+                                        </div>
+                                        <!-- End .product -->
                                         {% empty %}
-                                            <p class="text-center">Your cart is empty</p>
+                                        <p class="text-center">Your cart is empty</p>
                                         {% endfor %}
                                     </div>
                                     <!-- End .cart-product -->
@@ -259,7 +264,8 @@
                                     <div class="dropdown-cart-total">
                                         <span>SUBTOTAL:</span>
 
-                                        <span class="cart-total-price float-right">${{ cart.total_price|floatformat:2 }}</span>
+                                        <span class="cart-total-price float-right">${{ cart.total_price|floatformat:2
+                                            }}</span>
                                     </div>
                                     <!-- End .dropdown-cart-total -->
 
@@ -742,8 +748,6 @@
     <a id="scroll-top" href="#top" title="Top" role="button"><i class="icon-angle-up"></i></a>
 
     <!-- Plugins JS File -->
-    <!-- <script data-cfasync="false"
-        src=" {% static '../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js' %}"></script> -->
     <script src="{% static 'assets/js/jquery.min.js' %}"></script>
     <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
     <script src=" {% static 'assets/js/optional/isotope.pkgd.min.js' %}"></script>

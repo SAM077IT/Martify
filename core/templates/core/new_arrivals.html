@@ -1,3 +1,4 @@
+{% load core_tags %}
 <div class="products-slider custom-products owl-carousel owl-theme nav-outer show-nav-hover nav-image-center mb-2"
     data-owl-options="{
 						'dots': false,
@@ -14,20 +15,25 @@
     {% for product in new_arrival %}
     <div class="product-default appear-animate" data-animation-name="fadeInRightShorter">
         <figure>
-            <a href="product.html">
+            <a href="{% url 'shop_product' product=product.name|underscore %}">
                 <img src="{{ product.image.url }}" width="220" height="220" alt="product">
                 <img src="{{ product.image_secondry.url }}" width="220" height="220" alt="product">
             </a>
             <div class="label-group">
+                {% if product.off_percent %}
                 <div class="product-label label-hot">HOT</div>
+                <div class="product-label label-sale">-{{ product.off_percent }}%</div>
+                {% else %}
+                <div class="product-label label-hot">HOT</div>
+                {% endif %}
             </div>
         </figure>
         <div class="product-details">
             <div class="category-list">
-                <a href="category.html" class="product-category">Category</a>
+                <a href="{% url 'shop_with_category' category=product.category.name %}" class="product-category">{{ product.category.name }}</a>
             </div>
             <h3 class="product-title">
-                <a href="product.html">{{ product.name }}</a>
+                <a href="{% url 'shop_product' product=product.name|underscore %}">{{ product.name }}</a>
             </h3>
             <div class="ratings-container">
                 <div class="product-ratings">
@@ -39,17 +45,27 @@
             </div>
             <!-- End .product-container -->
             <div class="price-box">
-                <del class="old-price">$59.00</del>
-                <span class="product-price">{{product.price}}</span>
+                {% if product.sale_price %}
+                <del class="old-price">${{ product.price }}</del>
+                <span class="product-price">${{ product.sale_price }}</span>
+                {% else %}
+                <span class="product-price">${{ product.price }}</span>
+                {% endif %}
             </div>
             <!-- End .price-box -->
-            <div class="product-action">
-                <a href="wishlist.html" class="btn-icon-wish" title="wishlist"><i class="icon-heart"></i></a>
-                <a href="#" class="btn-icon btn-add-cart product-type-simple"><i
-                        class="icon-shopping-cart"></i><span>ADD TO CART</span></a>
-                <a href="ajax/product-quick-view.html" class="btn-quickview" title="Quick View"><i
-                        class="fas fa-external-link-alt"></i></a>
-            </div>
+                    <div class="product-action">
+                        <a href="{% url 'wishlist_page' %}" class="btn-icon-wish" title="wishlist"><i class="icon-heart"></i></a>
+                        <form action="{% url 'cart_add' product.id %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="override" value="false">
+                            <button type="submit" class="btn-icon btn-add-cart product-type-simple" title="Add to Cart">
+                                <i class="icon-shopping-cart"></i><span>ADD TO CART</span>
+                            </button>
+                        </form>
+                        <a href="ajax/product-quick-view.html" class="btn-quickview" title="Quick View"><i
+                                class="fas fa-external-link-alt"></i></a>
+                    </div>
         </div>
         <!-- End .product-details -->
     </div>

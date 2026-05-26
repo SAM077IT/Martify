@@ -7,20 +7,18 @@ from blog.views import BlogView
 
 
 class IndexView(View):
-    products = Product.objects.all()[:6]
-    new_arrival_products = Product.objects.order_by('created_at')[:6]
-    categories = Category.objects.annotate(product_count=Count('product'))
-    blogs = BlogView.post
-
     def get(self, request):
-        return render(request, "core/index.html", context={'products': self.products, 'new_arrival': self.new_arrival_products, 'categories': self.categories, 'blogs': dict(list(self.blogs.items())[:4]).values()})
+        products = Product.objects.all()[:6]
+        new_arrival_products = Product.objects.order_by('created_at')[:6]
+        categories = Category.objects.annotate(product_count=Count('product'))
+        blogs = dict(list(BlogView.post.items())[:4]).values()
+        return render(request, "core/index.html", context={'products': products, 'new_arrival': new_arrival_products, 'categories': categories, 'blogs': blogs})
 
 
 class ShopView(View):
-    products = Product.objects.all()
-
     def get(self, request):
-        return render(request, "core/category.html", context={"products": self.products})
+        products = Product.objects.all().prefetch_related("category")
+        return render(request, "core/category.html", context={"products": products})
 
 
 class CategoryView(View):
@@ -37,13 +35,14 @@ class ProductView(View):
 
         # Get product with case-insensitive fallback
         try:
-            product_details = Product.objects.get(name__iexact=product_name)
+            product_details = Product.objects.get(
+                name__iexact=product_name)
         except Product.DoesNotExist:
             raise Http404("Product does not exist")
         # Get related products from same category (excluding current product)
         related_products = Product.objects.filter(
             category=product_details.category
-        ).exclude(id=product_details.id)[:4]
+        ).exclude(id=product_details.id)[:4].prefetch_related("category")
 
         return render(request, "core/product.html", context={
             "product_details": product_details,
