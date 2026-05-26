@@ -26,6 +26,7 @@ urlpatterns = [
     path('blog/', include("blog.urls")),
     path('user/', include("wishlist.urls")),
     path('cart/', include("cart.urls")),
+    path('coupons/', include("coupons.urls")),
     path('order/', include("orders.urls")),
     path('__debug__/', include("debug_toolbar.urls"))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

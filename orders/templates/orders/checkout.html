@@ -1,0 +1,1459 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load core_tags %}
+
+{% block content %}
+        <main class="main main-test">
+            <div class="container checkout-container">
+                <ul class="checkout-progress-bar d-flex justify-content-center flex-wrap">
+                    <li>
+                        <a href="{% url 'cart_detail' %}">Shopping Cart</a>
+                    </li>
+                    <li class="active">
+                        <a href="{% url 'checkout' %}">Checkout</a>
+                    </li>
+                    <li class="disabled">
+                        <a href="#">Order Complete</a>
+                    </li>
+                </ul>
+
+                {% if not user.is_authenticated %}
+                <div class="login-form-container">
+                    <h4>Returning customer?
+                        <button data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne" class="btn btn-link btn-toggle">Login</button>
+                    </h4>
+
+                    <div id="collapseOne" class="collapse">
+                        <div class="login-section feature-box">
+                            <div class="feature-box-content">
+                                <form action="{% url 'login' %}" method="post" id="login-form">
+                                    {% csrf_token %}
+                                    <p>
+                                        If you have shopped with us before, please enter your details below. If you are a new customer, please proceed to the Billing & Shipping section.
+                                    </p>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="mb-0 pb-1">Username or email <span
+                                                        class="required">*</span></label>
+                                                <input type="text" name="username" class="form-control" required />
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="mb-0 pb-1">Password <span
+                                                        class="required">*</span></label>
+                                                <input type="password" name="password" class="form-control" required />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn">LOGIN</button>
+
+                                    <div class="form-footer mb-1">
+                                        <div class="custom-control custom-checkbox mb-0 mt-0">
+                                            <input type="checkbox" class="custom-control-input" id="lost-password" />
+                                            <label class="custom-control-label mb-0" for="lost-password">Remember
+                                                me</label>
+                                        </div>
+
+                                        <a href="{% url 'login' %}" class="forget-password">Lost your password?</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="checkout-discount">
+                    <h4>Have a coupon?
+                        <button data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseOne" class="btn btn-link btn-toggle">ENTER YOUR CODE</button>
+                    </h4>
+
+                    <div id="collapseTwo" class="collapse">
+                        <div class="feature-box">
+                            <div class="feature-box-content">
+                                <p>If you have a coupon code, please apply it below.</p>
+
+                                <form action="{% url 'coupon_apply' %}" method="post">
+                                    {% csrf_token %}
+                                    <div class="input-group">
+                                        <input type="text" name="code" class="form-control form-control-sm w-auto" placeholder="Coupon code" required="" />
+                                        <div class="input-group-append">
+                                            <button class="btn btn-sm mt-0" type="submit">
+                                                Apply Coupon
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                {% if cart.coupon %}
+                                <p class="text-success mt-2 mb-0">
+                                    <i class="fa fa-check-circle"></i>
+                                    Coupon <strong>{{ cart.coupon.code }}</strong> applied:
+                                    {{ cart.coupon.discount }}% off
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-7">
+                        <ul class="checkout-steps">
+                            <li>
+                                <h2 class="step-title">Billing details</h2>
+
+                                <form action="{% url 'checkout' %}" method="post" id="checkout-form" novalidate>
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>First name
+                                                    <abbr class="required" title="required">*</abbr>
+                                                </label>
+                                                {{ form.first_name }}
+                                                {% if form.first_name.errors %}
+                                                <div class="text-danger">{{ form.first_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Last name
+                                                    <abbr class="required" title="required">*</abbr></label>
+                                                {{ form.last_name }}
+                                                {% if form.last_name.errors %}
+                                                <div class="text-danger">{{ form.last_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Email address
+                                            <abbr class="required" title="required">*</abbr></label>
+                                        {{ form.email }}
+                                        {% if form.email.errors %}
+                                        <div class="text-danger">{{ form.email.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Phone <abbr class="required" title="required">*</abbr></label>
+                                        {{ form.phone }}
+                                        {% if form.phone.errors %}
+                                        <div class="text-danger">{{ form.phone.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Street address
+                                            <abbr class="required" title="required">*</abbr></label>
+                                        {{ form.address }}
+                                        {% if form.address.errors %}
+                                        <div class="text-danger">{{ form.address.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Town / City
+                                                    <abbr class="required" title="required">*</abbr></label>
+                                                {{ form.city }}
+                                                {% if form.city.errors %}
+                                                <div class="text-danger">{{ form.city.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>State / Province <abbr class="required" title="required">*</abbr></label>
+                                                {{ form.state }}
+                                                {% if form.state.errors %}
+                                                <div class="text-danger">{{ form.state.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Postcode / Zip
+                                                    <abbr class="required" title="required">*</abbr></label>
+                                                {{ form.zip_code }}
+                                                {% if form.zip_code.errors %}
+                                                <div class="text-danger">{{ form.zip_code.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Country
+                                                    <abbr class="required" title="required">*</abbr></label>
+                                                <div class="select-custom country-select-wrapper">
+                                                    {{ form.country }}
+                                                </div>
+                                                {% if form.country.errors %}
+                                                <div class="text-danger">{{ form.country.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mb-1">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="create-account" />
+                                            <label class="custom-control-label" data-toggle="collapse" data-target="#collapseThree" aria-controls="collapseThree" for="create-account">Create an
+                                                account?</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="collapseThree" class="collapse">
+                                        <div class="form-group">
+                                            <label>Create account password
+                                                <abbr class="required" title="required">*</abbr></label>
+                                            <input type="password" placeholder="Password" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <div class="custom-control custom-checkbox mt-0">
+                                            <input type="checkbox" class="custom-control-input" id="different-shipping" />
+                                            <label class="custom-control-label" data-toggle="collapse" data-target="#collapseFour" aria-controls="collapseFour" for="different-shipping">Ship to a
+                                                different
+                                                address?</label>
+
+
+                                        </div>
+                                    </div>
+
+                                    <div id="collapseFour" class="collapse">
+                                        <div class="shipping-info">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>First name <abbr class="required"
+                                                                title="required">*</abbr></label>
+                                                        <input type="text" class="form-control" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>Last name <abbr class="required"
+                                                                title="required">*</abbr></label>
+                                                        <input type="text" class="form-control" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label>Company name (optional)</label>
+                                                <input type="text" class="form-control">
+                                            </div>
+
+                                            <div class="select-custom">
+                                                <label>Country / Region <span class="required">*</span></label>
+                                                <select name="orderby" class="form-control">
+                                                    <option value="" selected="selected">Vanuatu</option>
+                                                    <option value="1">Brunei</option>
+                                                    <option value="2">Bulgaria</option>
+                                                    <option value="3">Burkina Faso</option>
+                                                    <option value="4">Burundi</option>
+                                                    <option value="5">Cameroon</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group mb-1 pb-2">
+                                                <label>Street address <abbr class="required"
+                                                        title="required">*</abbr></label>
+                                                <input type="text" class="form-control" placeholder="House number and street name" />
+                                            </div>
+
+                                            <div class="form-group">
+                                                <input type="text" class="form-control" placeholder="Apartment, suite, unit, etc. (optional)" />
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label>Town / City <abbr class="required"
+                                                        title="required">*</abbr></label>
+                                                <input type="text" class="form-control" />
+                                            </div>
+
+                                            <div class="select-custom">
+                                                <label>State / County <abbr class="required"
+                                                        title="required">*</abbr></label>
+                                                <select name="orderby" class="form-control">
+                                                    <option value="" selected="selected">NY</option>
+                                                    <option value="1">Brunei</option>
+                                                    <option value="2">Bulgaria</option>
+                                                    <option value="3">Burkina Faso</option>
+                                                    <option value="4">Burundi</option>
+                                                    <option value="5">Cameroon</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label>Postcode / ZIP <abbr class="required"
+                                                        title="required">*</abbr></label>
+                                                <input type="text" class="form-control" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="order-comments">Order notes (optional)</label>
+                                        <textarea class="form-control" placeholder="Notes about your order, e.g. special notes for delivery."></textarea>
+                                    </div>
+                                    <input type="hidden" name="payment_method" id="id_payment_method" value="cod">
+                                    <input type="hidden" name="payment_extra_charge" id="id_payment_extra_charge" value="0.00">
+                                    <input type="hidden" name="payment_app" id="id_payment_app" value="">
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- End .col-lg-8 -->
+
+                    <div class="col-lg-5">
+                        <div class="order-summary">
+                            <h3>YOUR ORDER</h3>
+
+                            <table class="table table-mini-cart">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Product</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in cart %}
+                                    <tr>
+                                        <td class="product-col">
+                                            <h3 class="product-title">
+                                                {{ item.product.name }} ×
+                                                <span class="product-qty">{{ item.quantity }}</span>
+                                            </h3>
+                                        </td>
+
+                                        <td class="price-col">
+                                            <span>${{ item.total_price|floatformat:2 }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="cart-subtotal">
+                                        <td>
+                                            <h4>Subtotal</h4>
+                                        </td>
+
+                                        <td class="price-col">
+                                            <span>${{ cart.total_price|floatformat:2 }}</span>
+                                        </td>
+                                    </tr>
+                                    {% if cart.coupon %}
+                                    <tr class="cart-subtotal text-success">
+                                        <td>
+                                            <h4>Discount ({{ cart.coupon.code }} - {{ cart.coupon.discount }}% off)</h4>
+                                        </td>
+
+                                        <td class="price-col">
+                                            <span>-${{ cart.discount|floatformat:2 }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="order-shipping">
+                                        <td class="text-left" colspan="2">
+                                            <h4 class="m-b-sm">Shipping</h4>
+
+                                            <div class="form-group form-group-custom-control">
+                                                <div class="custom-control custom-radio d-flex">
+                                                    <input type="radio" class="custom-control-input" name="radio" checked />
+                                                    <label class="custom-control-label">Local Pickup</label>
+                                                </div>
+                                                <!-- End .custom-checkbox -->
+                                            </div>
+                                            <!-- End .form-group -->
+
+                                            <div class="form-group form-group-custom-control mb-0">
+                                                <div class="custom-control custom-radio d-flex mb-0">
+                                                    <input type="radio" name="radio" class="custom-control-input">
+                                                    <label class="custom-control-label">Flat Rate</label>
+                                                </div>
+                                                <!-- End .custom-checkbox -->
+                                            </div>
+                                            <!-- End .form-group -->
+                                        </td>
+
+                                    </tr>
+
+                                    <tr class="order-cod-charge" id="cod-charge-row">
+                                        <td>
+                                            <h4>Cash on delivery fee</h4>
+                                            <small>10% additional charge</small>
+                                        </td>
+                                        <td class="price-col">
+                                            <span id="cod-charge-amount">$0.00</span>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="order-total">
+                                        <td>
+                                            <h4>Total</h4>
+                                        </td>
+                                        <td>
+                                            <b class="total-price"><span id="checkout-total-amount" data-base-total="{{ cart.total_after_discount|floatformat:2 }}">${{ cart.total_after_discount|floatformat:2 }}</span></b>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <div class="payment-methods">
+                                <h4 class="">Payment methods</h4>
+
+                                <div class="payment-tabs" role="tablist" aria-label="Payment methods">
+                                    <button type="button" class="payment-tab active" data-payment-tab="cod" role="tab" aria-selected="true" aria-controls="payment-panel-cod">
+                                        Cash on delivery
+                                        <span>+10%</span>
+                                    </button>
+                                    <button type="button" class="payment-tab" data-payment-tab="card" role="tab" aria-selected="false" aria-controls="payment-panel-card">
+                                        Credit card
+                                    </button>
+                                    <button type="button" class="payment-tab" data-payment-tab="apps" role="tab" aria-selected="false" aria-controls="payment-panel-apps">
+                                        Payment apps
+                                    </button>
+                                </div>
+
+                                <div class="payment-panel active" id="payment-panel-cod" data-payment-panel="cod" role="tabpanel">
+                                    <p class="payment-method-copy">
+                                        Pay in cash when your order is delivered. A 10% cash handling charge is added to your checkout total.
+                                    </p>
+                                    <ul class="payment-terms">
+                                        <li>Please keep the exact amount ready at delivery.</li>
+                                        <li>Orders may require phone confirmation before dispatch.</li>
+                                        <li>The additional charge is non-refundable after a successful delivery attempt.</li>
+                                    </ul>
+                                    <div class="payment-charge-summary">
+                                        <span>Extra charge</span>
+                                        <strong id="cod-panel-charge">$0.00</strong>
+                                    </div>
+                                </div>
+
+                                <div class="payment-panel" id="payment-panel-card" data-payment-panel="card" role="tabpanel" hidden>
+                                    <div class="form-group">
+                                        <label for="checkout-card-number">Card number</label>
+                                        <input type="text" class="form-control" id="checkout-card-number" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456">
+                                        <div class="checkout-field-error" id="checkout-card-number-error" aria-live="polite"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="checkout-card-type">Card type</label>
+                                        <input type="text" class="form-control" id="checkout-card-type" value="Card type will be detected" readonly>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="checkout-card-expiry">Exp date</label>
+                                                <input type="text" class="form-control" id="checkout-card-expiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY">
+                                                <div class="checkout-field-error" id="checkout-card-expiry-error" aria-live="polite"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="checkout-card-cvv">CVV</label>
+                                                <input type="password" class="form-control" id="checkout-card-cvv" inputmode="numeric" autocomplete="cc-csc" placeholder="123">
+                                                <div class="checkout-field-error" id="checkout-card-cvv-error" aria-live="polite"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="payment-panel" id="payment-panel-apps" data-payment-panel="apps" role="tabpanel" hidden>
+                                    <p class="payment-method-copy">Choose a payment app to continue after placing the order.</p>
+                                    <div class="payment-app-options" role="radiogroup" aria-label="Payment app">
+                                        <button type="button" class="payment-app-option active" data-payment-app="paypal" aria-pressed="true">
+                                            <span class="payment-app-logo paypal">PayPal</span>
+                                            <small>Pay with your PayPal account.</small>
+                                        </button>
+                                        <button type="button" class="payment-app-option" data-payment-app="apple_pay" aria-pressed="false">
+                                            <span class="payment-app-logo apple-pay">Apple Pay</span>
+                                            <small>Fast checkout on supported Apple devices.</small>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-dark btn-place-order" form="checkout-form">
+                                Place order
+                            </button>
+                        </div>
+                        <!-- End .cart-summary -->
+                    </div>
+                    <!-- End .col-lg-4 -->
+                </div>
+                <!-- End .row -->
+            </div>
+            <!-- End .container -->
+        </main>
+        <!-- End .main -->
+
+<style>
+.country-select-wrapper {
+    position: relative;
+}
+.country-flag-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    pointer-events: none;
+}
+.country-select-wrapper select.form-control {
+    padding-left: 32px;
+}
+#checkout-form .form-control.is-invalid,
+.payment-methods .form-control.is-invalid {
+    border-color: #dc3545;
+}
+#checkout-form .form-control.is-valid,
+.payment-methods .form-control.is-valid {
+    border-color: #28a745;
+}
+.checkout-field-error {
+    color: #dc3545;
+    display: none;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-top: 4px;
+}
+.checkout-error-list {
+    margin-bottom: 0;
+    padding-left: 18px;
+}
+.order-cod-charge {
+    display: none;
+}
+.order-cod-charge small {
+    color: #777;
+    display: block;
+    font-size: 12px;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+.payment-methods {
+    margin-top: 1.5rem;
+}
+.payment-tabs {
+    border: 1px solid #e7e7e7;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.payment-tab {
+    background: #fff;
+    border: 0;
+    border-right: 1px solid #e7e7e7;
+    color: #222529;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.25;
+    min-height: 54px;
+    padding: 10px 8px;
+    text-align: center;
+    text-transform: uppercase;
+}
+.payment-tab:last-child {
+    border-right: 0;
+}
+.payment-tab span {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+.payment-tab.active {
+    background: #222529;
+    color: #fff;
+}
+.payment-panel {
+    border: 1px solid #e7e7e7;
+    display: none;
+    padding: 1.2rem;
+}
+.payment-panel.active {
+    display: block;
+}
+.payment-method-copy {
+    color: #555;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 0.85rem;
+}
+.payment-terms {
+    color: #555;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+    padding-left: 18px;
+}
+.payment-charge-summary {
+    align-items: center;
+    border-top: 1px solid #e7e7e7;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.9rem;
+}
+.payment-charge-summary span {
+    color: #222529;
+    font-weight: 600;
+}
+.payment-charge-summary strong {
+    color: #222529;
+    font-size: 16px;
+}
+.payment-app-options {
+    display: grid;
+    gap: 10px;
+}
+.payment-app-option {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e7e7e7;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    min-height: 58px;
+    padding: 11px 13px;
+    text-align: left;
+}
+.payment-app-option.active {
+    border-color: #222529;
+    box-shadow: inset 0 0 0 1px #222529;
+}
+.payment-app-option small {
+    color: #777;
+    font-size: 12px;
+    line-height: 1.3;
+    margin-left: 12px;
+    text-align: right;
+}
+.payment-app-logo {
+    color: #222529;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+.payment-app-logo.paypal {
+    color: #003087;
+}
+.payment-app-logo.apple-pay {
+    color: #111;
+}
+@media (max-width: 575px) {
+    .payment-tabs {
+        grid-template-columns: 1fr;
+    }
+    .payment-tab {
+        border-bottom: 1px solid #e7e7e7;
+        border-right: 0;
+    }
+    .payment-tab:last-child {
+        border-bottom: 0;
+    }
+    .payment-app-option {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .payment-app-option small {
+        margin-left: 0;
+        margin-top: 4px;
+        text-align: left;
+    }
+}
+</style>
+<script>
+var CHECKOUT_INITIAL_STATE = '{{ form.state.value|default_if_none:""|escapejs }}';
+
+// States/Provinces data for US and Canada
+var US_STATES = [
+    {value: '', label: 'Select State'},
+    {value: 'AL', label: 'Alabama'}, {value: 'AK', label: 'Alaska'},
+    {value: 'AZ', label: 'Arizona'}, {value: 'AR', label: 'Arkansas'},
+    {value: 'CA', label: 'California'}, {value: 'CO', label: 'Colorado'},
+    {value: 'CT', label: 'Connecticut'}, {value: 'DE', label: 'Delaware'},
+    {value: 'FL', label: 'Florida'}, {value: 'GA', label: 'Georgia'},
+    {value: 'HI', label: 'Hawaii'}, {value: 'ID', label: 'Idaho'},
+    {value: 'IL', label: 'Illinois'}, {value: 'IN', label: 'Indiana'},
+    {value: 'IA', label: 'Iowa'}, {value: 'KS', label: 'Kansas'},
+    {value: 'KY', label: 'Kentucky'}, {value: 'LA', label: 'Louisiana'},
+    {value: 'ME', label: 'Maine'}, {value: 'MD', label: 'Maryland'},
+    {value: 'MA', label: 'Massachusetts'}, {value: 'MI', label: 'Michigan'},
+    {value: 'MN', label: 'Minnesota'}, {value: 'MS', label: 'Mississippi'},
+    {value: 'MO', label: 'Missouri'}, {value: 'MT', label: 'Montana'},
+    {value: 'NE', label: 'Nebraska'}, {value: 'NV', label: 'Nevada'},
+    {value: 'NH', label: 'New Hampshire'}, {value: 'NJ', label: 'New Jersey'},
+    {value: 'NM', label: 'New Mexico'}, {value: 'NY', label: 'New York'},
+    {value: 'NC', label: 'North Carolina'}, {value: 'ND', label: 'North Dakota'},
+    {value: 'OH', label: 'Ohio'}, {value: 'OK', label: 'Oklahoma'},
+    {value: 'OR', label: 'Oregon'}, {value: 'PA', label: 'Pennsylvania'},
+    {value: 'RI', label: 'Rhode Island'}, {value: 'SC', label: 'South Carolina'},
+    {value: 'SD', label: 'South Dakota'}, {value: 'TN', label: 'Tennessee'},
+    {value: 'TX', label: 'Texas'}, {value: 'UT', label: 'Utah'},
+    {value: 'VT', label: 'Vermont'}, {value: 'VA', label: 'Virginia'},
+    {value: 'WA', label: 'Washington'}, {value: 'WV', label: 'West Virginia'},
+    {value: 'WI', label: 'Wisconsin'}, {value: 'WY', label: 'Wyoming'},
+];
+
+var CA_PROVINCES = [
+    {value: '', label: 'Select Province'},
+    {value: 'AB', label: 'Alberta'}, {value: 'BC', label: 'British Columbia'},
+    {value: 'MB', label: 'Manitoba'}, {value: 'NB', label: 'New Brunswick'},
+    {value: 'NL', label: 'Newfoundland and Labrador'}, {value: 'NS', label: 'Nova Scotia'},
+    {value: 'ON', label: 'Ontario'}, {value: 'PE', label: 'Prince Edward Island'},
+    {value: 'QC', label: 'Quebec'}, {value: 'SK', label: 'Saskatchewan'},
+    {value: 'NT', label: 'Northwest Territories'}, {value: 'NU', label: 'Nunavut'},
+    {value: 'YT', label: 'Yukon'},
+];
+
+function getCheckoutRegionOptions(countryCode) {
+    if (countryCode === 'US') {
+        return US_STATES;
+    }
+    if (countryCode === 'CA') {
+        return CA_PROVINCES;
+    }
+    return [{value: '', label: 'Select country first'}];
+}
+
+function isValidCheckoutOption(options, value) {
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].value === value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function populateStates(countryCode, selectedValue) {
+    var stateSelect = document.getElementById('id_state');
+    if (!stateSelect) {
+        return;
+    }
+
+    var states = getCheckoutRegionOptions(countryCode);
+
+    // Clear current options
+    stateSelect.innerHTML = '';
+    stateSelect.disabled = !countryCode;
+
+    // Add new options
+    for (var i = 0; i < states.length; i++) {
+        var option = document.createElement('option');
+        option.value = states[i].value;
+        option.textContent = states[i].label;
+        stateSelect.appendChild(option);
+    }
+
+    if (selectedValue && isValidCheckoutOption(states, selectedValue)) {
+        stateSelect.value = selectedValue;
+    } else {
+        stateSelect.value = '';
+    }
+}
+
+function updateFlagIcon(countryCode) {
+    var wrapper = document.querySelector('.country-select-wrapper');
+    if (!wrapper) {
+        return;
+    }
+
+    var flagHolder = wrapper.querySelector('.country-flag-icon');
+    if (!countryCode) {
+        if (flagHolder) {
+            flagHolder.remove();
+        }
+        return;
+    }
+
+    if (!flagHolder) {
+        flagHolder = document.createElement('span');
+        flagHolder.className = 'country-flag-icon';
+        wrapper.insertBefore(flagHolder, wrapper.firstChild);
+    }
+
+    flagHolder.innerHTML = '<i class="flag flag-' + countryCode.toLowerCase() + '"></i>';
+}
+
+function validateCheckoutForm() {
+    var form = document.getElementById('checkout-form');
+    var errors = [];
+    var errorContainer = document.getElementById('checkout-errors');
+
+    // Clear previous errors
+    if (errorContainer) {
+        errorContainer.innerHTML = '';
+        errorContainer.style.display = 'none';
+    }
+
+    // First name
+    var firstName = document.querySelector('[name="first_name"]');
+    if (!firstName.value.trim()) {
+        errors.push('First name is required.');
+    } else if (!/^[A-Za-zÀ-ÿ\-\'\s]+$/.test(firstName.value.trim())) {
+        errors.push('First name can only contain letters, spaces, hyphens, and apostrophes.');
+    }
+
+    // Last name
+    var lastName = document.querySelector('[name="last_name"]');
+    if (!lastName.value.trim()) {
+        errors.push('Last name is required.');
+    } else if (!/^[A-Za-zÀ-ÿ\-\'\s]+$/.test(lastName.value.trim())) {
+        errors.push('Last name can only contain letters, spaces, hyphens, and apostrophes.');
+    }
+
+    // Email
+    var email = document.querySelector('[name="email"]');
+    if (!email.value.trim()) {
+        errors.push('Email address is required.');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+        errors.push('Please enter a valid email address.');
+    }
+
+    // Phone
+    var phone = document.querySelector('[name="phone"]');
+    var phoneVal = phone ? phone.value.trim() : '';
+    if (!phoneVal) {
+        errors.push('Phone number is required.');
+    } else {
+        var phoneClean = phoneVal.replace(/[\s\-\(\)\+]/g, '');
+        if (!/^\d+$/.test(phoneClean)) {
+            errors.push('Phone number can only contain digits, spaces, dashes, parentheses, and + sign.');
+        } else if (phoneClean.length < 7 || phoneClean.length > 15) {
+            errors.push('Phone number must be between 7 and 15 digits.');
+        }
+    }
+
+    // Address
+    var address = document.querySelector('[name="address"]');
+    if (!address.value.trim()) {
+        errors.push('Street address is required.');
+    }
+
+    // City
+    var city = document.querySelector('[name="city"]');
+    if (!city.value.trim()) {
+        errors.push('City is required.');
+    }
+
+    // Country
+    var country = document.getElementById('id_country');
+    if (!country.value) {
+        errors.push('Please select a country.');
+    }
+
+    // State
+    var state = document.getElementById('id_state');
+    if (!state.value) {
+        errors.push('Please select a state or province.');
+    }
+
+    // Zip code
+    var zipCode = document.querySelector('[name="zip_code"]');
+    var zipValue = zipCode.value.trim();
+    if (!zipValue) {
+        errors.push('ZIP / postal code is required.');
+    } else if (country.value === 'US') {
+        if (!/^\d{5}(-\d{4})?$/.test(zipValue)) {
+            errors.push('Enter a valid US ZIP code (e.g. 12345 or 12345-6789).');
+        }
+    } else if (country.value === 'CA') {
+        if (!/^[A-Za-z]\d[A-Za-z] ?\d[A-Za-z]\d$/.test(zipValue)) {
+            errors.push('Enter a valid Canadian postal code (e.g. A1A 1A1).');
+        }
+    }
+
+    // Show errors or submit
+    if (errors.length > 0) {
+        if (!errorContainer) {
+            errorContainer = document.createElement('div');
+            errorContainer.id = 'checkout-errors';
+            errorContainer.className = 'alert alert-danger';
+            form.insertBefore(errorContainer, form.firstChild);
+        }
+        errorContainer.innerHTML = '<strong>Please fix the following errors:</strong><ul class="checkout-error-list">';
+        for (var i = 0; i < errors.length; i++) {
+            errorContainer.innerHTML += '<li>' + errors[i] + '</li>';
+        }
+        errorContainer.innerHTML += '</ul>';
+        errorContainer.style.display = 'block';
+        errorContainer.scrollIntoView({behavior: 'smooth', block: 'start'});
+        return false;
+    }
+
+    return true;
+}
+
+var CHECKOUT_FIELD_NAMES = [
+    'first_name', 'last_name', 'email', 'phone',
+    'address', 'city', 'country', 'state', 'zip_code'
+];
+
+function getCheckoutField(name) {
+    return document.querySelector('#checkout-form [name="' + name + '"]');
+}
+
+function getCheckoutFeedback(field) {
+    var formGroup = field.closest('.form-group') || field.parentNode;
+    var feedback = formGroup.querySelector('[data-checkout-error-for="' + field.name + '"]');
+    var anchor = field.parentNode.classList.contains('country-select-wrapper') ? field.parentNode : field;
+
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.className = 'checkout-field-error';
+        feedback.setAttribute('data-checkout-error-for', field.name);
+        feedback.setAttribute('aria-live', 'polite');
+        anchor.parentNode.insertBefore(feedback, anchor.nextSibling);
+    }
+
+    return feedback;
+}
+
+function setCheckoutFieldState(field, message, showFeedback) {
+    if (!showFeedback) {
+        return;
+    }
+
+    var feedback = getCheckoutFeedback(field);
+
+    if (message) {
+        field.classList.add('is-invalid');
+        field.classList.remove('is-valid');
+        field.setAttribute('aria-invalid', 'true');
+        feedback.textContent = message;
+        feedback.style.display = 'block';
+    } else {
+        field.classList.remove('is-invalid');
+        field.removeAttribute('aria-invalid');
+        feedback.textContent = '';
+        feedback.style.display = 'none';
+
+        if (field.value.trim()) {
+            field.classList.add('is-valid');
+        } else {
+            field.classList.remove('is-valid');
+        }
+    }
+}
+
+function sanitizeCheckoutField(field) {
+    return field;
+}
+
+function getCheckoutFieldError(field) {
+    var value = field.value.trim();
+    var country = getCheckoutField('country');
+    var countryValue = country ? country.value : '';
+    var namePattern = /^[A-Za-z\u00C0-\u00FF\s'-]+$/;
+    var usZipPattern = /^\d{5}(-\d{4})?$/;
+    var caZipPattern = /^[A-Za-z]\d[A-Za-z] ?\d[A-Za-z]\d$/;
+
+    if (field.name === 'first_name') {
+        if (!value) return 'First name is required.';
+        if (!namePattern.test(value)) return 'First name can only contain letters, spaces, hyphens, and apostrophes.';
+    }
+
+    if (field.name === 'last_name') {
+        if (!value) return 'Last name is required.';
+        if (!namePattern.test(value)) return 'Last name can only contain letters, spaces, hyphens, and apostrophes.';
+    }
+
+    if (field.name === 'email') {
+        if (!value) return 'Email address is required.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
+    }
+
+    if (field.name === 'phone') {
+        if (!value) return 'Phone number is required.';
+        if (!/^[\d\s()+-]+$/.test(value)) return 'Phone number can only contain digits, spaces, dashes, parentheses, and + sign.';
+
+        var phoneDigits = value.replace(/[\s()+-]/g, '');
+        if (phoneDigits.length < 7 || phoneDigits.length > 15) return 'Phone number must be between 7 and 15 digits.';
+    }
+
+    if (field.name === 'address') {
+        if (!value) return 'Street address is required.';
+    }
+
+    if (field.name === 'city') {
+        if (!value) return 'City is required.';
+    }
+
+    if (field.name === 'country') {
+        if (!value) return 'Please select a country.';
+        if (value !== 'US' && value !== 'CA') return 'Please select a valid country.';
+    }
+
+    if (field.name === 'state') {
+        if (!countryValue) return 'Please select a country first.';
+
+        var regionOptions = getCheckoutRegionOptions(countryValue);
+        if (!value || !isValidCheckoutOption(regionOptions, value)) {
+            if (countryValue === 'US') return 'Please select a valid US state.';
+            if (countryValue === 'CA') return 'Please select a valid Canadian province/territory.';
+            return 'Please select a state or province.';
+        }
+    }
+
+    if (field.name === 'zip_code') {
+        if (!value) return 'ZIP / postal code is required.';
+        if (countryValue === 'US' && !usZipPattern.test(value)) {
+            return 'Enter a valid US ZIP code (e.g. 12345 or 12345-6789).';
+        }
+        if (countryValue === 'CA' && !caZipPattern.test(value)) {
+            return 'Enter a valid Canadian postal code (e.g. A1A 1A1).';
+        }
+        if (!countryValue && !usZipPattern.test(value) && !caZipPattern.test(value)) {
+            return 'Enter a valid ZIP code (e.g. 12345 or 12345-6789) or Canadian postal code (e.g. A1A 1A1).';
+        }
+    }
+
+    return '';
+}
+
+function validateCheckoutField(field, showFeedback) {
+    sanitizeCheckoutField(field);
+    var message = getCheckoutFieldError(field);
+    setCheckoutFieldState(field, message, showFeedback);
+    return message;
+}
+
+function validateAllCheckoutFields(showFeedback) {
+    var errors = [];
+
+    for (var i = 0; i < CHECKOUT_FIELD_NAMES.length; i++) {
+        var field = getCheckoutField(CHECKOUT_FIELD_NAMES[i]);
+        if (!field) {
+            continue;
+        }
+
+        var message = validateCheckoutField(field, showFeedback);
+        if (message) {
+            errors.push(message);
+        }
+    }
+
+    return errors;
+}
+
+function clearCheckoutFormErrorsIfResolved() {
+    var errorContainer = document.getElementById('checkout-errors');
+    if (errorContainer && validateAllCheckoutFields(false).length === 0) {
+        errorContainer.innerHTML = '';
+        errorContainer.style.display = 'none';
+    }
+}
+
+function validateCheckoutForm() {
+    var form = document.getElementById('checkout-form');
+    var errors = validateAllCheckoutFields(true);
+    var errorContainer = document.getElementById('checkout-errors');
+
+    if (errorContainer) {
+        errorContainer.innerHTML = '';
+        errorContainer.style.display = 'none';
+    }
+
+    if (errors.length > 0) {
+        if (!errorContainer) {
+            errorContainer = document.createElement('div');
+            errorContainer.id = 'checkout-errors';
+            errorContainer.className = 'alert alert-danger';
+            form.insertBefore(errorContainer, form.firstChild);
+        }
+
+        errorContainer.innerHTML = '<strong>Please fix the following errors:</strong><ul class="checkout-error-list">';
+        for (var i = 0; i < errors.length; i++) {
+            errorContainer.innerHTML += '<li>' + errors[i] + '</li>';
+        }
+        errorContainer.innerHTML += '</ul>';
+        errorContainer.style.display = 'block';
+        errorContainer.scrollIntoView({behavior: 'smooth', block: 'start'});
+        return false;
+    }
+
+    return true;
+}
+
+function setupCheckoutLiveValidation() {
+    for (var i = 0; i < CHECKOUT_FIELD_NAMES.length; i++) {
+        var field = getCheckoutField(CHECKOUT_FIELD_NAMES[i]);
+        if (!field) {
+            continue;
+        }
+
+        if (field.name === 'phone') {
+            field.setAttribute('inputmode', 'tel');
+        }
+
+        field.addEventListener('input', function() {
+            this.setAttribute('data-checkout-touched', 'true');
+            validateCheckoutField(this, true);
+
+            if (this.name === 'country') {
+                populateStates(this.value, '');
+                updateFlagIcon(this.value);
+                var state = getCheckoutField('state');
+                var zipCode = getCheckoutField('zip_code');
+                if (state) {
+                    state.setAttribute('data-checkout-touched', 'true');
+                    validateCheckoutField(state, true);
+                }
+                if (zipCode && (zipCode.value.trim() || zipCode.getAttribute('data-checkout-touched') === 'true')) {
+                    validateCheckoutField(zipCode, true);
+                }
+            }
+            clearCheckoutFormErrorsIfResolved();
+        });
+
+        field.addEventListener('blur', function() {
+            this.setAttribute('data-checkout-touched', 'true');
+            validateCheckoutField(this, true);
+            clearCheckoutFormErrorsIfResolved();
+        });
+
+        field.addEventListener('change', function() {
+            this.setAttribute('data-checkout-touched', 'true');
+            validateCheckoutField(this, true);
+
+            if (this.name === 'country') {
+                populateStates(this.value, '');
+                updateFlagIcon(this.value);
+                var state = getCheckoutField('state');
+                var zipCode = getCheckoutField('zip_code');
+                if (state) {
+                    state.setAttribute('data-checkout-touched', 'true');
+                    validateCheckoutField(state, true);
+                }
+                if (zipCode && (zipCode.value.trim() || zipCode.getAttribute('data-checkout-touched') === 'true')) {
+                    validateCheckoutField(zipCode, true);
+                }
+            }
+            clearCheckoutFormErrorsIfResolved();
+        });
+    }
+}
+
+function formatCheckoutMoney(value) {
+    return '$' + Number(value || 0).toFixed(2);
+}
+
+function getCheckoutBaseTotal() {
+    var total = document.getElementById('checkout-total-amount');
+    if (!total) {
+        return 0;
+    }
+
+    return parseFloat((total.getAttribute('data-base-total') || total.textContent || '0').replace(/[^0-9.-]/g, '')) || 0;
+}
+
+function updateCheckoutPaymentTotals(method) {
+    var baseTotal = getCheckoutBaseTotal();
+    var codCharge = method === 'cod' ? baseTotal * 0.10 : 0;
+    var totalAmount = document.getElementById('checkout-total-amount');
+    var codRow = document.getElementById('cod-charge-row');
+    var codAmount = document.getElementById('cod-charge-amount');
+    var codPanelCharge = document.getElementById('cod-panel-charge');
+    var extraChargeInput = document.getElementById('id_payment_extra_charge');
+
+    if (codRow) {
+        codRow.style.display = codCharge > 0 ? 'table-row' : 'none';
+    }
+    if (codAmount) {
+        codAmount.textContent = formatCheckoutMoney(codCharge);
+    }
+    if (codPanelCharge) {
+        codPanelCharge.textContent = formatCheckoutMoney(codCharge);
+    }
+    if (totalAmount) {
+        totalAmount.textContent = formatCheckoutMoney(baseTotal + codCharge);
+    }
+    if (extraChargeInput) {
+        extraChargeInput.value = codCharge.toFixed(2);
+    }
+}
+
+function setCheckoutPaymentMethod(method) {
+    var tabs = document.querySelectorAll('[data-payment-tab]');
+    var panels = document.querySelectorAll('[data-payment-panel]');
+    var methodInput = document.getElementById('id_payment_method');
+    var appInput = document.getElementById('id_payment_app');
+
+    for (var i = 0; i < tabs.length; i++) {
+        var isActiveTab = tabs[i].getAttribute('data-payment-tab') === method;
+        tabs[i].classList.toggle('active', isActiveTab);
+        tabs[i].setAttribute('aria-selected', isActiveTab ? 'true' : 'false');
+    }
+
+    for (var j = 0; j < panels.length; j++) {
+        var isActivePanel = panels[j].getAttribute('data-payment-panel') === method;
+        panels[j].classList.toggle('active', isActivePanel);
+        panels[j].hidden = !isActivePanel;
+    }
+
+    if (methodInput) {
+        methodInput.value = method;
+    }
+    if (appInput && method === 'apps' && !appInput.value) {
+        var activeApp = document.querySelector('[data-payment-app].active') || document.querySelector('[data-payment-app]');
+        appInput.value = activeApp ? activeApp.getAttribute('data-payment-app') : 'paypal';
+    }
+    if (appInput && method !== 'apps') {
+        appInput.value = '';
+    }
+
+    updateCheckoutPaymentTotals(method);
+}
+
+function getCardDigits() {
+    var cardNumber = document.getElementById('checkout-card-number');
+    return cardNumber ? cardNumber.value.replace(/\D/g, '') : '';
+}
+
+function detectCheckoutCardType(digits) {
+    if (/^4/.test(digits)) return 'Visa';
+    if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
+    if (/^3[47]/.test(digits)) return 'American Express';
+    if (/^(6011|65|64[4-9])/.test(digits)) return 'Discover';
+    if (/^35/.test(digits)) return 'JCB';
+    if (/^3(0[0-5]|[68])/.test(digits)) return 'Diners Club';
+    return digits ? 'Unknown card' : 'Card type will be detected';
+}
+
+function formatCheckoutCardNumber(digits, cardType) {
+    var groups = [];
+    var pattern = cardType === 'American Express' ? [4, 6, 5] : [4, 4, 4, 4, 3];
+    var index = 0;
+
+    for (var i = 0; i < pattern.length; i++) {
+        if (digits.length > index) {
+            groups.push(digits.substring(index, index + pattern[i]));
+        }
+        index += pattern[i];
+    }
+
+    return groups.join(' ');
+}
+
+function isValidLuhnNumber(digits) {
+    var sum = 0;
+    var shouldDouble = false;
+
+    for (var i = digits.length - 1; i >= 0; i--) {
+        var digit = parseInt(digits.charAt(i), 10);
+        if (shouldDouble) {
+            digit *= 2;
+            if (digit > 9) {
+                digit -= 9;
+            }
+        }
+        sum += digit;
+        shouldDouble = !shouldDouble;
+    }
+
+    return digits.length > 0 && sum % 10 === 0;
+}
+
+function setPaymentFieldState(fieldId, errorId, message, showFeedback) {
+    var field = document.getElementById(fieldId);
+    var feedback = document.getElementById(errorId);
+
+    if (!field || !feedback || !showFeedback) {
+        return;
+    }
+
+    if (message) {
+        field.classList.add('is-invalid');
+        field.classList.remove('is-valid');
+        field.setAttribute('aria-invalid', 'true');
+        feedback.textContent = message;
+        feedback.style.display = 'block';
+    } else {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+        field.removeAttribute('aria-invalid');
+        feedback.textContent = '';
+        feedback.style.display = 'none';
+    }
+}
+
+function getCardExpiryError() {
+    var expiry = document.getElementById('checkout-card-expiry');
+    var value = expiry ? expiry.value.trim() : '';
+    var match = /^(\d{2})\/(\d{2})$/.exec(value);
+
+    if (!value) return 'Expiration date is required.';
+    if (!match) return 'Use MM/YY for the expiration date.';
+
+    var month = parseInt(match[1], 10);
+    var year = 2000 + parseInt(match[2], 10);
+    var now = new Date();
+    var expiresAt = new Date(year, month, 0, 23, 59, 59);
+
+    if (month < 1 || month > 12) return 'Enter a valid expiration month.';
+    if (expiresAt < now) return 'Card expiration date must be in the future.';
+
+    return '';
+}
+
+function validateCheckoutPayment(showFeedback) {
+    var methodInput = document.getElementById('id_payment_method');
+    var method = methodInput ? methodInput.value : 'cod';
+
+    if (method !== 'card') {
+        return true;
+    }
+
+    var digits = getCardDigits();
+    var cardType = detectCheckoutCardType(digits);
+    var cardNumberMessage = '';
+    var cvv = document.getElementById('checkout-card-cvv');
+    var cvvValue = cvv ? cvv.value.trim() : '';
+    var cvvLength = cardType === 'American Express' ? 4 : 3;
+    var cvvMessage = '';
+    var expiryMessage = getCardExpiryError();
+
+    if (!digits) {
+        cardNumberMessage = 'Card number is required.';
+    } else if (cardType === 'Unknown card') {
+        cardNumberMessage = 'Enter a supported card number.';
+    } else if (!isValidLuhnNumber(digits)) {
+        cardNumberMessage = 'Enter a valid card number.';
+    }
+
+    if (!cvvValue) {
+        cvvMessage = 'CVV is required.';
+    } else if (!new RegExp('^\\d{' + cvvLength + '}$').test(cvvValue)) {
+        cvvMessage = cardType === 'American Express' ? 'American Express CVV must be 4 digits.' : 'CVV must be 3 digits.';
+    }
+
+    setPaymentFieldState('checkout-card-number', 'checkout-card-number-error', cardNumberMessage, showFeedback);
+    setPaymentFieldState('checkout-card-expiry', 'checkout-card-expiry-error', expiryMessage, showFeedback);
+    setPaymentFieldState('checkout-card-cvv', 'checkout-card-cvv-error', cvvMessage, showFeedback);
+
+    return !cardNumberMessage && !expiryMessage && !cvvMessage;
+}
+
+function setupCheckoutPaymentMethods() {
+    var tabs = document.querySelectorAll('[data-payment-tab]');
+    var appOptions = document.querySelectorAll('[data-payment-app]');
+    var cardNumber = document.getElementById('checkout-card-number');
+    var cardType = document.getElementById('checkout-card-type');
+    var cardExpiry = document.getElementById('checkout-card-expiry');
+    var cardCvv = document.getElementById('checkout-card-cvv');
+    var appInput = document.getElementById('id_payment_app');
+
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].addEventListener('click', function() {
+            setCheckoutPaymentMethod(this.getAttribute('data-payment-tab'));
+        });
+    }
+
+    for (var j = 0; j < appOptions.length; j++) {
+        appOptions[j].addEventListener('click', function() {
+            for (var k = 0; k < appOptions.length; k++) {
+                appOptions[k].classList.remove('active');
+                appOptions[k].setAttribute('aria-pressed', 'false');
+            }
+            this.classList.add('active');
+            this.setAttribute('aria-pressed', 'true');
+            if (appInput) {
+                appInput.value = this.getAttribute('data-payment-app');
+            }
+        });
+    }
+
+    if (cardNumber && cardType) {
+        cardNumber.addEventListener('input', function() {
+            var digits = this.value.replace(/\D/g, '').slice(0, 19);
+            var type = detectCheckoutCardType(digits);
+            this.value = formatCheckoutCardNumber(digits, type);
+            cardType.value = type;
+
+            if (cardCvv) {
+                cardCvv.setAttribute('maxlength', type === 'American Express' ? '4' : '3');
+            }
+            validateCheckoutPayment(true);
+        });
+    }
+
+    if (cardExpiry) {
+        cardExpiry.addEventListener('input', function() {
+            var value = this.value.replace(/\D/g, '').slice(0, 4);
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            this.value = value;
+            validateCheckoutPayment(true);
+        });
+    }
+
+    if (cardCvv) {
+        cardCvv.setAttribute('maxlength', '3');
+        cardCvv.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, this.getAttribute('maxlength') || 3);
+            validateCheckoutPayment(true);
+        });
+    }
+
+    if (appInput && !appInput.value) {
+        appInput.value = 'paypal';
+    }
+    setCheckoutPaymentMethod('cod');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var countrySelect = document.getElementById('id_country');
+    if (countrySelect) {
+        // Set flag icon on initial page load
+        updateFlagIcon(countrySelect.value);
+        populateStates(countrySelect.value, CHECKOUT_INITIAL_STATE);
+
+        // Update states and flag when country changes
+        countrySelect.addEventListener('change', function() {
+            populateStates(this.value, '');
+            updateFlagIcon(this.value);
+        });
+    }
+
+    setupCheckoutLiveValidation();
+    setupCheckoutPaymentMethods();
+
+    // Attach client-side validation to form submit
+    var checkoutForm = document.getElementById('checkout-form');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', function(e) {
+            var checkoutValid = validateCheckoutForm();
+            var paymentValid = validateCheckoutPayment(true);
+
+            if (!checkoutValid || !paymentValid) {
+                e.preventDefault();
+                if (checkoutValid && !paymentValid) {
+                    document.querySelector('.payment-methods').scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

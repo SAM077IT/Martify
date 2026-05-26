@@ -28,6 +28,7 @@ class SessionCart:
         if not cart:
             cart = self.session[settings.CART_SESSION_ID] = {}
         self.cart = cart
+        self._normalize_cart()
         # Coupon
         self.coupon_id = self.session.get('coupon_id')
 
@@ -35,6 +36,22 @@ class SessionCart:
 
     def save(self):
         self.session.modified = True
+
+    def _normalize_cart(self):
+        needs_save = False
+        for item in self.cart.values():
+            price = item.get('price')
+            if price is not None and not isinstance(price, str):
+                item['price'] = str(price)
+                needs_save = True
+
+            quantity = item.get('quantity')
+            if quantity is not None and not isinstance(quantity, int):
+                item['quantity'] = int(quantity)
+                needs_save = True
+
+        if needs_save:
+            self.save()
 
     # ── public API ────────────────────────────────────────────────────────────
 
@@ -62,7 +79,10 @@ class SessionCart:
     def __iter__(self):
         product_ids = self.cart.keys()
         products = Product.objects.filter(id__in=product_ids)
-        cart = self.cart.copy()
+        cart = {
+            product_id: item.copy()
+            for product_id, item in self.cart.items()
+        }
         for product in products:
             cart[str(product.id)]['product'] = product
         for item in cart.values():

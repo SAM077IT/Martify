@@ -226,14 +226,11 @@
                                         <div class="product">
                                             <div class="product-details">
                                                 <h4 class="product-title">
-                                                    <a
-                                                        href="{% url 'shop_product' product=item.product.name|underscore %}">{{
-                                                        item.product.name }}</a>
+                                                    <a href="{% url 'shop_product' product=item.product.name|underscore %}">{{ item.product.name }}</a>
                                                 </h4>
 
                                                 <span class="cart-product-info">
-                                                    <span class="cart-product-qty">{{ item.quantity }}</span> × ${{
-                                                    item.price|floatformat:2 }}
+                                                    <span class="cart-product-qty">{{ item.quantity }}</span> × ${{ item.price|floatformat:2 }}
                                                 </span>
                                             </div>
                                             <!-- End .product-details -->
@@ -264,8 +261,7 @@
                                     <div class="dropdown-cart-total">
                                         <span>SUBTOTAL:</span>
 
-                                        <span class="cart-total-price float-right">${{ cart.total_price|floatformat:2
-                                            }}</span>
+                                        <span class="cart-total-price float-right">${{ cart.total_price|floatformat:2 }}</span>
                                     </div>
                                     <!-- End .dropdown-cart-total -->
 
