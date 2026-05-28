@@ -1,0 +1,182 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load core_tags %}
+
+{% block content %}
+<main class="main main-test">
+    <div class="container checkout-container">
+        <ul class="checkout-progress-bar d-flex justify-content-center flex-wrap">
+            <li>
+                <a href="{% url 'cart_detail' %}">Shopping Cart</a>
+            </li>
+            <li>
+                <a href="{% url 'checkout' %}">Checkout</a>
+            </li>
+            <li class="active">
+                <a href="#">Order Complete</a>
+            </li>
+        </ul>
+
+        <div class="order-success-wrapper text-center">
+            <div class="order-success-icon mb-4">
+                <i class="fas fa-check-circle text-success" style="font-size: 80px;"></i>
+            </div>
+            <h2 class="order-success-title">Thank you for your order!</h2>
+            <p class="order-success-subtitle text-muted mb-4">
+                Your order has been placed successfully.
+            </p>
+
+            {% if order %}
+            <div class="order-success-details bg-light p-4 rounded mb-4 d-inline-block text-left">
+                <p class="mb-1"><strong>Order Number:</strong>
+                    <a href="{% url 'order_detail' order.id %}">#{{ order.id }}</a>
+                </p>
+                <p class="mb-1"><strong>Date:</strong> {{ order.created_at|date:"F d, Y" }}</p>
+                <p class="mb-1"><strong>Email:</strong> {{ order.email }}</p>
+                <p class="mb-1"><strong>Total:</strong> <span class="text-primary">${{ order.total|floatformat:2 }}</span></p>
+                <p class="mb-1"><strong>Payment Method:</strong>
+                    {% if order.stripe_payment_intent %}
+                    Credit Card
+                    {% else %}
+                    Cash on Delivery
+                    {% endif %}
+                </p>
+                <p class="mb-0"><strong>Status:</strong>
+                    <span class="badge badge-warning">{{ order.get_status_display }}</span>
+                </p>
+            </div>
+
+            <div class="order-summary-box bg-white p-4 rounded border mb-4 d-inline-block text-left">
+                <h5 class="mb-3">Order Summary</h5>
+                <table class="table table-sm table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>
+                                {{ item.product.name }}
+                                <span class="text-muted"> × {{ item.quantity }}</span>
+                            </td>
+                            <td class="text-right">${{ item.get_total_price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Subtotal</strong></td>
+                            <td class="text-right">${{ order.subtotal|floatformat:2 }}</td>
+                        </tr>
+                        {% if order.discount %}
+                        <tr class="text-success">
+                            <td><strong>Discount ({{ order.discount }}% off)</strong></td>
+                            <td class="text-right">-${{ order.discount_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="order-total">
+                            <td><strong>Total</strong></td>
+                            <td class="text-right"><strong class="text-primary">${{ order.total|floatformat:2 }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <p class="order-success-message text-muted mt-4">
+                <i class="fas fa-truck"></i>
+                Your tracking number will be generated soon! We'll notify you via email once your order is on its way.
+            </p>
+            {% endif %}
+
+            <div class="order-success-actions mt-4">
+                <a href="{% url 'index' %}" class="btn btn-dark mr-2">Continue Shopping</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'order_history' %}" class="btn btn-outline-primary">View Orders</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+.order-success-wrapper {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+}
+.order-success-icon {
+    animation: scaleIn 0.5s ease;
+}
+.order-success-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #222529;
+    margin-bottom: 8px;
+}
+.order-success-subtitle {
+    font-size: 16px;
+}
+.order-success-details {
+    min-width: 320px;
+}
+.order-success-details p {
+    font-size: 14px;
+    line-height: 1.8;
+}
+.order-summary-box {
+    min-width: 320px;
+}
+.order-summary-box table th {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-bottom: 2px solid #e7e7e7;
+}
+.order-summary-box table td {
+    font-size: 14px;
+}
+.order-success-message {
+    font-size: 15px;
+    border: 1px dashed #dee2e6;
+    padding: 15px 20px;
+    border-radius: 6px;
+    background: #fafafa;
+    display: inline-block;
+}
+.order-success-message i {
+    margin-right: 6px;
+    color: #28a745;
+}
+.order-success-actions .btn {
+    min-width: 160px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+@keyframes scaleIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+@media (max-width: 576px) {
+    .order-success-details,
+    .order-summary-box {
+        min-width: 100%;
+    }
+    .order-success-title {
+        font-size: 22px;
+    }
+    .order-success-actions .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .order-success-actions .btn.mr-2 {
+        margin-right: 0 !important;
+    }
+}
+</style>
+{% endblock %}

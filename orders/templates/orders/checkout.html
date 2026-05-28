@@ -109,6 +109,15 @@
 
                                 <form action="{% url 'checkout' %}" method="post" id="checkout-form" novalidate>
                                     {% csrf_token %}
+                                    {% if form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        <ul class="checkout-error-list mb-0">
+                                            {% for error in form.non_field_errors %}
+                                            <li>{{ error }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
@@ -221,9 +230,13 @@
                                         <div class="form-group">
                                             <label>Create account password
                                                 <abbr class="required" title="required">*</abbr></label>
-                                            <input type="password" placeholder="Password" class="form-control" />
+                                            {{ form.account_password }}
+                                            {% if form.account_password.errors %}
+                                            <div class="text-danger">{{ form.account_password.errors }}</div>
+                                            {% endif %}
                                         </div>
                                     </div>
+                                    <input type="hidden" name="create_account" id="id_create_account" value="0">
 
                                     <div class="form-group">
                                         <div class="custom-control custom-checkbox mt-0">
@@ -795,115 +808,6 @@ function updateFlagIcon(countryCode) {
     flagHolder.innerHTML = '<i class="flag flag-' + countryCode.toLowerCase() + '"></i>';
 }
 
-function validateCheckoutForm() {
-    var form = document.getElementById('checkout-form');
-    var errors = [];
-    var errorContainer = document.getElementById('checkout-errors');
-
-    // Clear previous errors
-    if (errorContainer) {
-        errorContainer.innerHTML = '';
-        errorContainer.style.display = 'none';
-    }
-
-    // First name
-    var firstName = document.querySelector('[name="first_name"]');
-    if (!firstName.value.trim()) {
-        errors.push('First name is required.');
-    } else if (!/^[A-Za-zÀ-ÿ\-\'\s]+$/.test(firstName.value.trim())) {
-        errors.push('First name can only contain letters, spaces, hyphens, and apostrophes.');
-    }
-
-    // Last name
-    var lastName = document.querySelector('[name="last_name"]');
-    if (!lastName.value.trim()) {
-        errors.push('Last name is required.');
-    } else if (!/^[A-Za-zÀ-ÿ\-\'\s]+$/.test(lastName.value.trim())) {
-        errors.push('Last name can only contain letters, spaces, hyphens, and apostrophes.');
-    }
-
-    // Email
-    var email = document.querySelector('[name="email"]');
-    if (!email.value.trim()) {
-        errors.push('Email address is required.');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
-        errors.push('Please enter a valid email address.');
-    }
-
-    // Phone
-    var phone = document.querySelector('[name="phone"]');
-    var phoneVal = phone ? phone.value.trim() : '';
-    if (!phoneVal) {
-        errors.push('Phone number is required.');
-    } else {
-        var phoneClean = phoneVal.replace(/[\s\-\(\)\+]/g, '');
-        if (!/^\d+$/.test(phoneClean)) {
-            errors.push('Phone number can only contain digits, spaces, dashes, parentheses, and + sign.');
-        } else if (phoneClean.length < 7 || phoneClean.length > 15) {
-            errors.push('Phone number must be between 7 and 15 digits.');
-        }
-    }
-
-    // Address
-    var address = document.querySelector('[name="address"]');
-    if (!address.value.trim()) {
-        errors.push('Street address is required.');
-    }
-
-    // City
-    var city = document.querySelector('[name="city"]');
-    if (!city.value.trim()) {
-        errors.push('City is required.');
-    }
-
-    // Country
-    var country = document.getElementById('id_country');
-    if (!country.value) {
-        errors.push('Please select a country.');
-    }
-
-    // State
-    var state = document.getElementById('id_state');
-    if (!state.value) {
-        errors.push('Please select a state or province.');
-    }
-
-    // Zip code
-    var zipCode = document.querySelector('[name="zip_code"]');
-    var zipValue = zipCode.value.trim();
-    if (!zipValue) {
-        errors.push('ZIP / postal code is required.');
-    } else if (country.value === 'US') {
-        if (!/^\d{5}(-\d{4})?$/.test(zipValue)) {
-            errors.push('Enter a valid US ZIP code (e.g. 12345 or 12345-6789).');
-        }
-    } else if (country.value === 'CA') {
-        if (!/^[A-Za-z]\d[A-Za-z] ?\d[A-Za-z]\d$/.test(zipValue)) {
-            errors.push('Enter a valid Canadian postal code (e.g. A1A 1A1).');
-        }
-    }
-
-    // Show errors or submit
-    if (errors.length > 0) {
-        if (!errorContainer) {
-            errorContainer = document.createElement('div');
-            errorContainer.id = 'checkout-errors';
-            errorContainer.className = 'alert alert-danger';
-            form.insertBefore(errorContainer, form.firstChild);
-        }
-        errorContainer.innerHTML = '<strong>Please fix the following errors:</strong><ul class="checkout-error-list">';
-        for (var i = 0; i < errors.length; i++) {
-            errorContainer.innerHTML += '<li>' + errors[i] + '</li>';
-        }
-        errorContainer.innerHTML += '</ul>';
-        errorContainer.style.display = 'block';
-        errorContainer.scrollIntoView({behavior: 'smooth', block: 'start'});
-        return false;
-    }
-
-    return true;
-}
-
 var CHECKOUT_FIELD_NAMES = [
     'first_name', 'last_name', 'email', 'phone',
     'address', 'city', 'country', 'state', 'zip_code'
@@ -1438,6 +1342,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setupCheckoutLiveValidation();
     setupCheckoutPaymentMethods();
+
+    // Handle create account checkbox - set hidden field value
+    var createAccountCheckbox = document.getElementById('create-account');
+    var createAccountHidden = document.getElementById('id_create_account');
+    var passwordField = document.getElementById('id_account_password');
+    if (createAccountCheckbox && createAccountHidden) {
+        function updateCreateAccountFlag() {
+            createAccountHidden.value = createAccountCheckbox.checked ? '1' : '0';
+            if (passwordField) {
+                passwordField.required = createAccountCheckbox.checked;
+                if (!createAccountCheckbox.checked) {
+                    passwordField.value = '';
+                    passwordField.classList.remove('is-invalid', 'is-valid');
+                }
+            }
+        }
+        createAccountCheckbox.addEventListener('change', updateCreateAccountFlag);
+        updateCreateAccountFlag();
+    }
 
     // Attach client-side validation to form submit
     var checkoutForm = document.getElementById('checkout-form');

@@ -44,6 +44,7 @@ CA_PROVINCES = [
     ('NU', 'Nunavut'), ('YT', 'Yukon'),
 ]
 
+
 def validate_phone(value):
     """Validate phone number: digits, spaces, dashes, parentheses, plus sign only."""
     if not value:
@@ -141,10 +142,31 @@ class OrderCreateForm(forms.ModelForm):
 
     zip_code = forms.CharField(
         max_length=20,
-        validators=[validate_zip_code],
         error_messages={'required': 'ZIP / postal code is required.'},
         widget=forms.TextInput(attrs={
             'class': 'form-control', 'placeholder': 'ZIP Code / Postal Code',
+        })
+    )
+
+    # Combined state/province choices for initial render (JS will filter dynamically)
+    ALL_STATE_CHOICES = [('', 'Select State / Province')] + \
+        US_STATES[1:] + CA_PROVINCES[1:]
+
+    state = forms.ChoiceField(
+        choices=ALL_STATE_CHOICES,
+        required=True,
+        error_messages={'required': 'Please select a state or province.'},
+        widget=forms.Select(attrs={
+            'class': 'form-control', 'id': 'id_state',
+        })
+    )
+
+    # Password field for account creation (non-authenticated users)
+    account_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 'placeholder': 'Password',
+            'id': 'id_account_password',
         })
     )
 
@@ -152,13 +174,8 @@ class OrderCreateForm(forms.ModelForm):
         model = Order
         fields = [
             'first_name', 'last_name', 'email', 'phone',
-            'address', 'city', 'state', 'zip_code', 'country',
+            'address', 'city', 'country', 'state', 'zip_code',
         ]
-        widgets = {
-            'state': forms.Select(choices=[], attrs={
-                'class': 'form-control', 'id': 'id_state',
-            }),
-        }
 
     def clean_first_name(self):
         value = self.cleaned_data.get('first_name', '').strip()
@@ -201,7 +218,7 @@ class OrderCreateForm(forms.ModelForm):
         value = self.cleaned_data.get('state', '')
         country = self.cleaned_data.get('country', '')
         if country == 'US':
-            valid_states = [code for code, _ in US_STATES if code]
+            valid_states = [code for code, _ in US_STATES]
             if not value or value not in valid_states:
                 raise ValidationError('Please select a valid US state.')
         elif country == 'CA':
