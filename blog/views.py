@@ -7,29 +7,34 @@ from .models import Blog, BlogCategory
 
 
 class BlogView(View):
-    blogs = Blog.objects.all().order_by("-created_at")
-    blog_categories = BlogCategory.objects.all()
-    post = {}
-    for blog in blogs:
-        post[blog.id] = {'title': blog.title,
-                         'image': blog.image, 'content': blog.post_body[:150], 'day': blog.created_at.day, 'month': blog.created_at, 'slug': blog.title.replace(' ', '-')}
 
-    def get_recent_posts(obj):
+    def get_blog_posts(self):
+        blogs = Blog.objects.all().order_by("-created_at")
+        post = {}
+        for blog in blogs:
+            post[blog.id] = {'title': blog.title,
+                             'image': blog.image, 'content': blog.post_body[:150], 'day': blog.created_at.day, 'month': blog.created_at, 'slug': blog.title.replace(' ', '-')}
+        return post
+
+    def get_blog_categories(self):
+        return BlogCategory.objects.all()
+
+    def get_recent_posts(self):
+        blogs = Blog.objects.all().order_by("-created_at")
         i = 0
         recent_posts = {}
-        for blog in obj:
+        for blog in blogs:
             if i < 2:
                 recent_posts[blog.id] = {'title':
                                          blog.title, 'image': blog.image, 'date': blog.created_at}
                 i += 1
             else:
                 break
-        return recent_posts
-
-    recent_posts = get_recent_posts(blogs).values()
+        return recent_posts.values()
 
     def get(self, request):
-        return render(request, "postblog.html", context={'blogs': self.post.values(), 'categories': self.blog_categories, 'recent_posts': self.recent_posts})
+        post = self.get_blog_posts()
+        return render(request, "postblog.html", context={'blogs': post.values(), 'categories': self.get_blog_categories(), 'recent_posts': self.get_recent_posts()})
 
 
 class SingleBlog(BlogView):
@@ -45,7 +50,7 @@ class SingleBlog(BlogView):
                 request, "Undefined post! Please try again.")
             return redirect('index')
 
-        return render(request=request, template_name='single_post.html', context={'post': blog_post, 'categories': super().blog_categories, 'recent_posts': super().recent_posts})
+        return render(request=request, template_name='single_post.html', context={'post': blog_post, 'categories': self.get_blog_categories(), 'recent_posts': self.get_recent_posts()})
 
 
 class PostCategory(View):

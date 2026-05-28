@@ -94,6 +94,24 @@
         white-space: nowrap;
     }
 
+    .martify-cart-page .qty-input {
+        width: 5.2rem;
+        height: 4.3rem;
+        text-align: center;
+    }
+
+    .martify-cart-page .qty-update-status {
+        font-size: 1.2rem;
+        color: #28a745;
+        margin-left: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .martify-cart-page .qty-update-status.show {
+        opacity: 1;
+    }
+
     .martify-cart-page .cart-summary .table-totals td:last-child {
         white-space: nowrap;
     }
@@ -150,7 +168,7 @@
                         </thead>
                         <tbody>
                             {% for item in cart %}
-                            <tr class="product-row">
+                            <tr class="product-row" data-product-id="{{ item.product.id }}">
                                 <td class="product-col">
                                     <div class="cart-product-cell">
                                         <form action="{% url 'cart_remove' item.product.id %}" method="post" class="cart-product-remove">
@@ -180,14 +198,18 @@
                                 </td>
                                 <td>${{ item.price|floatformat:2 }}</td>
                                 <td>
-                                    <form action="{% url 'cart_add' item.product.id %}" method="post" class="cart-quantity-form">
-                                        {% csrf_token %}
+                                    <div class="cart-quantity-form">
                                         <div class="product-single-qty">
-                                            <input class="horizontal-quantity form-control" type="number" name="quantity" value="{{ item.quantity }}" min="1" max="20">
+                                            <input class="qty-input form-control cart-qty-input"
+                                                type="number"
+                                                value="{{ item.quantity }}"
+                                                min="1"
+                                                max="20"
+                                                data-product-id="{{ item.product.id }}"
+                                                data-url="{% url 'cart_add' item.product.id %}">
                                         </div>
-                                        <input type="hidden" name="override" value="true">
-                                        <button type="submit" class="btn btn-sm btn-shop">Update</button>
-                                    </form>
+                                        <span class="qty-update-status"><i class="fa fa-check"></i></span>
+                                    </div>
                                 </td>
                                 <td class="text-right">
                                     <span class="subtotal-price">${{ item.total_price|floatformat:2 }}</span>
@@ -237,12 +259,12 @@
                         <tbody>
                             <tr>
                                 <td>Subtotal</td>
-                                <td>${{ cart.total_price|floatformat:2 }}</td>
+                                <td class="cart-summary-subtotal">${{ cart.total_price|floatformat:2 }}</td>
                             </tr>
                             {% if cart.coupon %}
-                            <tr class="text-success">
+                            <tr class="text-success cart-summary-discount-row">
                                 <td>Discount</td>
-                                <td>-${{ cart.discount|floatformat:2 }}</td>
+                                <td class="cart-summary-discount">-${{ cart.discount|floatformat:2 }}</td>
                             </tr>
                             {% endif %}
                             <tr>
@@ -253,7 +275,7 @@
                         <tfoot>
                             <tr>
                                 <td>Total</td>
-                                <td>${{ cart.total_after_discount|floatformat:2 }}</td>
+                                <td class="cart-summary-total">${{ cart.total_after_discount|floatformat:2 }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -268,7 +290,7 @@
             </div>
         </div>
         {% else %}
-        <div class="text-center py-5">
+        <div class="text-center py-5 cart-empty-message">
             <i class="icon-shopping-cart d-block mb-3" style="font-size: 5rem; color: #ccc;"></i>
             <h3>Your cart is empty</h3>
             <p class="text-muted">Add products to your cart and they will appear here.</p>
@@ -280,3 +302,106 @@
     </div>
 </main>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ── Cart page: AJAX remove ──────────────────────────────────────────
+    document.querySelectorAll('.martify-cart-page .cart-product-remove').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            var row = this.closest('tr.product-row');
+            var action = this.action;
+            var csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch(action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                // Remove the row with a fade-out effect
+                if (row) {
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(function () {
+                        row.remove();
+
+                        // If no rows left, reload to show empty cart message
+                        var remaining = document.querySelectorAll('.martify-cart-page tbody tr.product-row');
+                        if (remaining.length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+
+                // Update cart page summary & header count (shared helpers)
+                if (window.CartAjax) {
+                    window.CartAjax.updateCartCount(data.cart_count);
+                    window.CartAjax.updateCartPageSummary(data);
+                }
+            })
+            .catch(function (err) { console.error('Cart remove error:', err); });
+        });
+    });
+
+    // ── Cart page: AJAX quantity update (auto-submit on change) ────────
+    var qtyTimers = {};
+
+    document.querySelectorAll('.martify-cart-page .cart-qty-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var productId = this.dataset.productId;
+            var url = this.dataset.url;
+
+            // Clamp value
+            var qty = parseInt(this.value, 10);
+            if (isNaN(qty) || qty < 1) qty = 1;
+            if (qty > 20) qty = 20;
+            this.value = qty;
+
+            // Debounce: clear previous timer for this input
+            if (qtyTimers[productId]) clearTimeout(qtyTimers[productId]);
+
+            var self = this;
+            qtyTimers[productId] = setTimeout(function () {
+                var formData = new FormData();
+                formData.append('quantity', qty);
+                formData.append('override', 'true');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    // Show checkmark feedback
+                    var statusEl = self.closest('.cart-quantity-form').querySelector('.qty-update-status');
+                    if (statusEl) {
+                        statusEl.classList.add('show');
+                        setTimeout(function () { statusEl.classList.remove('show'); }, 1500);
+                    }
+
+                    // Update cart page summary & header count
+                    if (window.CartAjax) {
+                        window.CartAjax.updateCartCount(data.cart_count);
+                        window.CartAjax.updateCartPageSummary(data);
+                    }
+                })
+                .catch(function (err) { console.error('Quantity update error:', err); });
+            }, 300);
+        });
+    });
+});
+</script>
+{% endblock %}
+

@@ -95,7 +95,7 @@ class SessionCart:
 
     @property
     def total_price(self):
-        return sum(Decimal(item['price']) * item['quantity'] for item in self.cart.values())
+        return sum((Decimal(item['price']) * item['quantity'] for item in self.cart.values()), Decimal('0'))
 
     @property
     def coupon(self):
@@ -110,7 +110,7 @@ class SessionCart:
     def discount(self):
         if self.coupon:
             return (self.coupon.discount / Decimal(100)) * self.total_price
-        return Decimal(0)
+        return Decimal('0')
 
     @property
     def total_after_discount(self):

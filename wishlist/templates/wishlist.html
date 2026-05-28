@@ -1,5 +1,6 @@
 {% extends 'core\base.html' %}
 {% load static %}
+{% load core_tags %}
 {% block content %}
 <main class="main">
     <div class="page-header">
@@ -19,13 +20,27 @@
         </div>
     </div>
 
+    <!-- Toast notification container -->
+    <div id="wishlist-toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+
     <div class="container">
-        <div class="wishlist-title">
-            <h2 class="p-2">My wishlist</h2>
+        <div class="wishlist-title d-flex justify-content-between align-items-center flex-wrap">
+            <h2 class="p-2">My Wishlist</h2>
+            {% if items_count > 0 %}
+            <span class="text-muted">{{ items_count }} item{{ items_count|pluralize }}</span>
+            {% endif %}
         </div>
+
+        {% if items %}
         <div class="wishlist-table-container">
-            <!-- <h3>Wishlist: {{wishlist}}</h3> -->
-            <!-- <h4>Items: {{items}}</h4> -->
+            {% if items_count > 1 %}
+            <div class="mb-3 text-end">
+                <button id="btn-clear-wishlist" class="btn btn-outline-danger btn-sm">
+                    Clear All
+                </button>
+            </div>
+            {% endif %}
+
             <table class="table table-wishlist mb-0">
                 <thead>
                     <tr>
@@ -34,101 +49,161 @@
                         <th class="price-col">Price</th>
                         <th class="status-col">Stock Status</th>
                         <th class="action-col">Actions</th>
+                        <th class="remove-col"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in items %}
-                    <tr class="product-row">
+                    <tr class="product-row" id="wishlist-row-{{ item.product.id }}" data-item-id="{{ item.product.id }}">
                         <td>
                             <figure class="product-image-container">
                                 <a href="product.html" class="product-image">
-                                    <img src="{{ item.product.image.url }}">
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
                                 </a>
-
-                                <a href="#" class="btn-remove icon-cancel btn-icon-wish"
-                                    data-product-id="{{ item.product.id }}" title="Remove Product"></a>
                             </figure>
                         </td>
                         <td>
                             <h5 class="product-title">
-                                <a href="product.html">{{ item.product.name }}</a>
+                                <a href="{% url 'shop_product' product=item.product.name|underscore %}">
+                                    {{ item.product.name }}
+                                </a>
                             </h5>
                         </td>
-                        <td class="price-box">{{ item.product.price }}</td>
+                        <td class="price-box">
+                            {% if item.product.sale_price %}
+                                <del class="text-muted">{{ item.product.price }}</del>
+                                <span class="text-danger fw-bold">{{ item.product.sale_price }}</span>
+                            {% else %}
+                                {{ item.product.price }}
+                            {% endif %}
+                        </td>
                         <td>
-                            <span class="stock-status">In stock</span>
+                            {% if item.is_in_stock %}
+                                <span class="stock-status text-success">In stock</span>
+                            {% else %}
+                                <span class="stock-status text-danger">Out of stock</span>
+                            {% endif %}
                         </td>
                         <td class="action">
-                            <a href="ajax/product-quick-view.html" class="btn btn-quickview mt-1 mt-md-0"
-                                title="Quick View">Quick
-                                View</a>
+                            <a href="{% url 'shop_product' product=item.product.name|underscore %}?quick_view=1"
+                                class="btn btn-quickview mt-1 mt-md-0" title="Quick View">Quick View</a>
                             <button class="btn btn-dark btn-add-cart product-type-simple btn-shop">
                                 ADD TO CART
                             </button>
                         </td>
+                        <td class="remove">
+                            <button class="btn-remove-wishlist btn btn-link text-danger p-0"
+                                    data-product-id="{{ item.product.id }}"
+                                    data-csrf="{{ csrf_token }}"
+                                    title="Remove from wishlist">
+                                <i class="icon-cancel"></i> ✕
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
-                    <!-- <tr class="product-row">
-                        <td>
-                            <figure class="product-image-container">
-                                <a href="product.html" class="product-image">
-                                    <img src="assets/images/products/product-5.jpg" alt="product">
-                                </a>
-
-                                <a href="#" class="btn-remove icon-cancel" title="Remove Product"></a>
-                            </figure>
-                        </td>
-                        <td>
-                            <h5 class="product-title">
-                                <a href="product.html">Men Cap</a>
-                            </h5>
-                        </td>
-                        <td class="price-box">$17.90</td>
-                        <td>
-                            <span class="stock-status">In stock</span>
-                        </td>
-                        <td class="action">
-                            <a href="ajax/product-quick-view.html" class="btn btn-quickview mt-1 mt-md-0"
-                                title="Quick View">Quick
-                                View</a>
-                            <a href="product.html" class="btn btn-dark btn-add-cart btn-shop">
-                                SELECT OPTION
-                            </a>
-                        </td>
-                    </tr>
-
-                    <tr class="product-row">
-                        <td>
-                            <figure class="product-image-container">
-                                <a href="product.html" class="product-image">
-                                    <img src="assets/images/products/product-6.jpg" alt="product">
-                                </a>
-
-                                <a href="#" class="btn-remove icon-cancel" title="Remove Product"></a>
-                            </figure>
-                        </td>
-                        <td>
-                            <h5 class="product-title">
-                                <a href="product.html">Men Black Gentle Belt</a>
-                            </h5>
-                        </td>
-                        <td class="price-box">$17.90</td>
-                        <td>
-                            <span class="stock-status">In stock</span>
-                        </td>
-                        <td class="action">
-                            <a href="ajax/product-quick-view.html" class="btn btn-quickview mt-1 mt-md-0"
-                                title="Quick View">Quick
-                                View</a>
-                            <a href="product.html" class="btn btn-dark btn-add-cart btn-shop">
-                                SELECT OPTION
-                            </a>
-                        </td>
-                    </tr> -->
                 </tbody>
             </table>
-        </div><!-- End .cart-table-container -->
+        </div><!-- End .wishlist-table-container -->
+
+        {% else %}
+        <!-- Empty wishlist state -->
+        <div class="empty-wishlist text-center py-5">
+            <i class="icon-heart-o" style="font-size: 4rem; color: #ccc;"></i>
+            <h3 class="mt-3">Your wishlist is empty</h3>
+            <p class="text-muted">Browse our store and add items you love to your wishlist!</p>
+            <a href="{% url 'index' %}" class="btn btn-primary mt-2">Start Shopping</a>
+        </div>
+        {% endif %}
     </div><!-- End .container -->
 </main><!-- End .main -->
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toastContainer = document.getElementById('wishlist-toast-container');
+    const csrfToken = '{{ csrf_token }}';
+
+    function showToast(message, type = 'success') {
+        const bgClass = type === 'success' ? 'bg-success' : (type === 'danger' ? 'bg-danger' : 'bg-info');
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white ${bgClass} border-0 show`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function getCookie(name) {
+        let v = null;
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.split('=')[1]);
+        });
+        return v;
+    }
+
+    // --- Remove single item ---
+    document.querySelectorAll('.btn-remove-wishlist').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const productId = this.dataset.productId;
+            const row = document.getElementById('wishlist-row-' + productId);
+
+            fetch(`/user/wishlist/remove/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.removed) {
+                    // Animate row removal
+                    if (row) {
+                        row.style.transition = 'opacity 0.3s';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 300);
+                    }
+                    showToast('Removed from wishlist', 'info');
+                    // If last item removed, reload to show empty state
+                    if (data.wishlist_count === 0) {
+                        setTimeout(() => location.reload(), 400);
+                    }
+                }
+            })
+            .catch(() => showToast('Failed to remove item', 'danger'));
+        });
+    });
+
+    // --- Clear entire wishlist ---
+    const clearBtn = document.getElementById('btn-clear-wishlist');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            if (!confirm('Are you sure you want to remove all items from your wishlist?')) return;
+
+            fetch('/user/wishlist/clear/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.cleared) {
+                    showToast(`Cleared ${data.removed_count} item(s)`, 'info');
+                    setTimeout(() => location.reload(), 400);
+                }
+            })
+            .catch(() => showToast('Failed to clear wishlist', 'danger'));
+        });
+    }
+});
+</script>
 {% endblock %}

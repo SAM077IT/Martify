@@ -54,7 +54,7 @@
             </div>
             <!-- End .price-box -->
                     <div class="product-action">
-                        <a href="{% url 'wishlist_page' %}" class="btn-icon-wish" title="wishlist"><i class="icon-heart"></i></a>
+                        <a href="{% url 'wishlist:wishlist_page' %}" class="btn-icon-wish" data-product-id="{{ product.id }}" title="wishlist"><i class="icon-heart"></i></a>
                         <form action="{% url 'cart_add' product.id %}" method="post" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="quantity" value="1">
@@ -63,7 +63,7 @@
                                 <i class="icon-shopping-cart"></i><span>ADD TO CART</span>
                             </button>
                         </form>
-                        <a href="ajax/product-quick-view.html" class="btn-quickview" title="Quick View"><i
+                        <a href="{% url 'shop_product' product=product.name|underscore %}?quick_view=1" class="btn-quickview" title="Quick View"><i
                                 class="fas fa-external-link-alt"></i></a>
                     </div>
         </div>
@@ -72,3 +72,4 @@
     {% endfor %}
 </div>
 <!-- End .featured-proucts -->
+

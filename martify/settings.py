@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -88,11 +92,12 @@ WSGI_APPLICATION = 'martify.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'martify',
-        'HOST': 'localhost',
-        'USER': 'root',
-        'PASSWORD': 'new_password'
+        'ENGINE': os.getenv('RDS_DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.getenv('RDS_DB_NAME', 'martify_production'),
+        'USER': os.getenv('RDS_DB_USER', 'admin_user'),
+        'PASSWORD': os.getenv('RDS_DB_PASSWORD', 'your_secure_password_here'),
+        'HOST': os.getenv('RDS_DB_HOST', 'localhost'),
+        'PORT': os.getenv('RDS_DB_PORT', '3306'),
     }
 }
 

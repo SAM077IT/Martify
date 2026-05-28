@@ -75,7 +75,7 @@
                                     <li><a href="{% url 'about' %}">About Us</a></li>
                                     <li><a href=" {% url 'blog' %}">Blog</a></li>
                                     {% if user.is_authenticated %}
-                                    <li><a href="{% url 'wishlist_page' %}">My Wishlist</a></li>
+                                    <li><a href="{% url 'wishlist:wishlist_page' %}">My Wishlist</a></li>
                                     {% else %}
                                     <li><a href="{% url 'login' %}">My Wishlist</a></li>
                                     {% endif %}
@@ -196,7 +196,7 @@
                         {% if user.is_authenticated %}
                         <a href="{% url 'dashboard' %}" class="header-icon" title="dashboard"><i
                                 class="icon-user-2"></i></a>
-                        <a href="{% url 'wishlist_page' %}" class="header-icon" title="wishlist"><i
+                        <a href="{% url 'wishlist:wishlist_page' %}" class="header-icon" title="wishlist"><i
                                 class="icon-wishlist-2"></i></a>
                         {% else %}
                         <a href="{% url 'login' %}" class="header-icon" title="login"><i class="icon-user-2"></i></a>
@@ -247,8 +247,12 @@
                                                     {% endif %}
                                                 </a>
 
-                                                <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove"
-                                                    title="Remove Product"><span>×</span></a>
+                                                <!-- <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove"
+                                                    title="Remove Product"><span>×</span></a> -->
+                                                <form action="{% url 'cart_remove' item.product.id %}" method="post" class="cart-product-remove">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-remove icon-cancel" title="Remove Product"></button>
+                                                </form>
                                             </figure>
                                         </div>
                                         <!-- End .product -->
@@ -375,7 +379,7 @@
                             <li>
                                 <a href="#">Pages</a>
                                 <ul>
-                                    <li><a href="{% url 'wishlist_page' %}">Wishlist</a></li>
+                                    <li><a href="{% url 'wishlist:wishlist_page' %}">Wishlist</a></li>
                                     <li><a href="{% url 'cart_detail' %}">Shopping Cart</a></li>
                                     <li><a href="{% url 'checkout' %}">Checkout</a></li>
                                     <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
@@ -607,7 +611,7 @@
                         <a href="#">Pages<span class="tip tip-hot">Hot!</span></a>
                         <ul>
                             <li>
-                                <a href="{% url 'wishlist_page' %}">Wishlist</a>
+                                <a href="{% url 'wishlist:wishlist_page' %}">Wishlist</a>
                             </li>
                             <li>
                                 <a href="{% url 'cart_detail' %}">Shopping Cart</a>
@@ -647,7 +651,7 @@
                     {% endif %}
                     <li><a href="{% url 'contact' %}">Contact Us</a></li>
                     <li><a href="{% url 'blog' %}">Blog</a></li>
-                    <li><a href="{% url 'wishlist_page' %}">My Wishlist</a></li>
+                    <li><a href="{% url 'wishlist:wishlist_page' %}">My Wishlist</a></li>
                     <li><a href="{% url 'cart_detail' %}">Cart</a></li>
                     {% if user.is_authenticated %}
                     <li><a href=" {% url 'logout' %}" class="">Logout</a></li>
@@ -688,7 +692,7 @@
             </a>
         </div>
         <div class="sticky-info">
-            <a href="{% url 'wishlist_page' %}" class="">
+            <a href="{% url 'wishlist:wishlist_page' %}" class="">
                 <i class="icon-wishlist-2"></i>Wishlist
             </a>
         </div>
@@ -706,42 +710,12 @@
         </div>
     </div>
 
-    <div class="newsletter-popup mfp-hide bg-img" id="newsletter-popup-form"
-        style="background: #f1f1f1 no-repeat center/cover url(assets/images/newsletter_popup_bg.jpg)">
-        <div class="newsletter-popup-content">
-            <img src="{% static 'assets/images/logo.png' %}" width="211" height="44" alt="Logo" class="newsletter">
-            <h2>Subscribe to newsletter</h2>
-
-            <p>
-                Subscribe to the Porto mailing list to receive updates on new arrivals, special offers and our
-                promotions.
-            </p>
-
-            <form action="#">
-                <div class="input-group">
-                    <input type="email" class="form-control" id="newsletter-email" name="newsletter-email"
-                        placeholder="Your email address" required />
-                    <input type="submit" class="btn btn-primary" value="Submit" />
-                </div>
-            </form>
-            <div class="newsletter-subscribe">
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" value="0" id="show-again" />
-                    <label for="show-again" class="custom-control-label">
-                        Don't show this popup again
-                    </label>
-                </div>
-            </div>
-        </div>
-        <!-- End .newsletter-popup-content -->
-
-        <button title="Close (Esc)" type="button" class="mfp-close">
-            ×
-        </button>
-    </div>
+    
     <!-- End .newsletter-popup -->
 
     <a id="scroll-top" href="#top" title="Top" role="button"><i class="icon-angle-up"></i></a>
+
+    {% block extra_js %}{% endblock %}
 
     <!-- Plugins JS File -->
     <script src="{% static 'assets/js/jquery.min.js' %}"></script>
@@ -753,6 +727,7 @@
     <!-- Main JS File -->
     <script src="{% static 'assets/js/main.min.js' %}"></script>
     <script src="{% static 'assets/js/custom.js' %}"></script>
+    <script src="{% static 'assets/js/cart.js' %}"></script>
     <!-- <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'99d582230ee5e1f9',t:'MTc2Mjk0NTA0NA=='};var a=document.createElement('script');a.src='../../cdn-cgi/challenge-platform/h/g/scripts/jsd/fd468eb09fcf/maind41d.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script> -->
     <script defer
         src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015"

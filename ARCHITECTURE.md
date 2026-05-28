@@ -11,6 +11,8 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 - Session-based and database-backed shopping cart
 - Planned Stripe payment integration
 - Multi-category product catalog with tagging
+- AJAX-driven cart operations (add/remove) without page redirects
+- Quick-view product modal with AJAX add-to-cart
 
 ---
 
@@ -29,14 +31,23 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 **Responsibilities:**
 - Serves the homepage (`IndexView`)
 - Product catalog (`ShopView`, `CategoryView`, `ProductView`)
+- Quick-view product modal (via `?quick_view=1` query parameter on `ProductView`)
 - Provides base templates and context processors
 - Custom template tags and filters (`core_tags`)
 - Static pages (contact, about, etc.)
 
 **Important Files:**
 - `templatetags/core_tags.py`: Custom template filter `underscore` for URL name conversion
-- `views.py`: Class-based views for all core pages
+- `views.py`: Class-based views for all core pages, including quick-view support
 - `urls.py`: URL routing for product, category, and static pages
+- `templates/core/product_quick_view.html`: Quick-view modal template loaded via Magnific Popup AJAX
+
+**Quick View Feature:**
+The `ProductView` checks for `?quick_view=1` in the query string. When present, it renders `product_quick_view.html` instead of the full product page. This lightweight template is injected into a Magnific Popup modal and includes:
+- Product image carousel with zoom
+- Product details (name, price, description, SKU, category)
+- Add-to-cart form with quantity selector and CSRF token
+- The add-to-cart form is handled via AJAX (see `custom.js` below)
 
 ---
 
@@ -52,6 +63,24 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 - `utils.py`: Synchronization utilities (`sync_cart_to_db()`, `load_db_cart_into_session()`)
 - `signals.py`: Authentication signal handlers for automatic cart sync
 
+**Forms:**
+- `CartAddProductForm` (`cart/forms.py`): Validates cart add requests
+  - `quantity`: IntegerField (min 1, max 100) — accepts free-form numeric input
+  - `override`: BooleanField (hidden) — whether to replace or increment quantity
+
+**AJAX API:**
+The cart views return JSON responses when the `X-Requested-With: XMLHttpRequest` header is present:
+
+| Endpoint | Method | Request | Response |
+|----------|--------|---------|----------|
+| `/cart/add/<id>/` | POST | `quantity`, `override`, CSRF | `{success, cart_count, cart_total, cart_discount, cart_total_after_discount, message}` |
+| `/cart/remove/<id>/` | POST | CSRF | `{cart_count, cart_total, cart_discount, cart_total_after_discount, message}` |
+| `/cart/` | GET | — | Full cart page (HTML) |
+
+**`cart_add` form validation:**
+- Valid (`200`): Returns `{success: true, ...}` with updated cart data
+- Invalid (`400`): Returns `{success: false, errors: [...], ...}` with current cart data unchanged
+
 **Responsibilities:**
 - Add/remove/update cart items via session storage
 - Calculate cart totals and discounts
@@ -62,13 +91,15 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
   - **On logout**: No action needed (DB already current)
   - **Empty cart cleanup**: Delete DB cart when empty
 - Coupon application logic (via coupon ID in session)
+- Full AJAX API for frontend cart operations without page reloads
 
 **Files:**
 - `cart.py`: SessionCart implementation
 - `utils.py`: Cart synchronization utilities
 - `signals.py`: `user_logged_in` and `user_logged_out` signal handlers
 - `apps.py`: Registers signal handlers in `ready()` method
-- `views.py`: Cart add/remove/clear with automatic sync for authenticated users
+- `views.py`: Cart add/remove/clear with automatic sync and JSON AJAX responses
+- `forms.py`: `CartAddProductForm` with IntegerField quantity validation
 - `context_processors.py`: `cart_context` provides global cart access (via `core/context_processors.py`)
 - `templatetags/core_tags.py`: `underscore` filter for product URL generation
 
@@ -150,6 +181,7 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 **Responsibilities:**
 - Save products for later
 - Move items to cart
+- AJAX toggle via `POST /user/wishlist/toggle/<id>/`
 
 ---
 
@@ -173,16 +205,6 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 - Blog CRUD operations
 - Content publishing
 - SEO metadata
-
----
-
-#### `ajax`
-**Purpose:** Asynchronous request handlers
-
-**Responsibilities:**
-- Dynamic UI updates
-- Real-time features
-- API-like endpoints for frontend interactions
 
 ---
 
@@ -231,6 +253,50 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 
 ---
 
+## Frontend JavaScript Architecture
+
+### Script Loading Order (in `base.html`)
+```
+jquery.min.js          → jQuery foundation
+bootstrap.bundle.min.js → Bootstrap components
+isotope.pkgd.min.js     → Grid layout (optional)
+plugins.min.js          → jQuery plugins (TouchSpin, magnificPopup, elevateZoom, etc.)
+jquery.appear.min.js    → Appear animations
+main.min.js             → Theme initialization (Porto theme)
+custom.js               → Martify custom JS (wishlist AJAX, quick-view cart fix)
+cart.js                 → Shared AJAX cart remove handlers
+```
+
+### Key: `main.min.js` Conflict Resolution for Quick View
+
+The Porto theme's `main.min.js` initializes product single pages via `initProductSingle()`. When the quick-view popup opens (via Magnific Popup AJAX), this function binds a jQuery click handler on `.add-cart` that:
+1. Calls `e.preventDefault()` — blocking form submission
+2. Removes `d-none` from `.view-cart` — showing a "View product" link
+
+**This is handled in `custom.js`** via a `MutationObserver` + `jQuery.off()` pattern:
+1. `MutationObserver` watches `document.body` for injected `.mfp-ajax-product` nodes
+2. After a 200ms delay (safety net at 500ms), `fixQuickViewAddCart()` runs
+3. `jQuery(btn).off('click')` removes all jQuery click handlers from the button
+4. A new native `addEventListener('click', ...)` is attached that performs AJAX add-to-cart
+5. The "View product" link has been removed from the quick-view template entirely
+
+### `custom.js` Responsibilities
+- **Wishlist toggle**: AJAX POST to `/user/wishlist/toggle/<id>/` on `.btn-icon-wish` click
+- **Quick-view add-to-cart**: MutationObserver-based fix that overrides `main.min.js` handlers and performs AJAX add-to-cart with:
+  - Button state feedback ("Adding..." → "Added ✓" / "Failed")
+  - Cart count badge updates across header and sticky bar
+  - Cart popup subtotal updates
+  - Form validation error display (e.g., "Ensure this value is greater than or equal to 1")
+
+### `cart.js` Responsibilities
+- **Cart item removal**: AJAX POST for `.cart-product-remove` forms in the header dropdown cart popup
+  - Slide-out animation on removed items
+  - Cart count and subtotal updates
+  - Empty cart message when last item removed
+  - Cart page summary updates (when on cart page)
+
+---
+
 ## Key Workflows
 
 ### 1. User Registration & Authentication
@@ -257,7 +323,7 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 3. DB cart is always current (authoritative source)
 
 **Logout:**
-1. User logs out → `user_logged_out` signal fires
+1. User logs in → `user_logged_out` signal fires
 2. DB cart already current from real-time sync → no action needed
 3. Session cart is cleared by Django's logout
 
@@ -270,12 +336,37 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 - Keeps database clean of unused empty carts
 
 ### 3. Browse & Add to Cart (Normal Flow)
-1. User browses products from `core` app
+1. User browses products from `core` app (shop page / category page)
 2. Add to cart → `cart/views.py:cart_add` uses `SessionCart`
 3. For logged-in users: `sync_cart_to_db()` updates DB in real-time
 4. Cart count badge updates dynamically via `{{ cart|length }}`
 
-### 4. Checkout Process
+### 4. Quick View & Add to Cart (AJAX Flow)
+1. User clicks the quick-view icon on a product card in the shop
+2. Magnific Popup opens and fetches `product_quick_view.html` via AJAX (`?quick_view=1`)
+3. `main.min.js` initializes the popup content (TouchSpin quantity, carousel, etc.)
+4. `custom.js` MutationObserver detects the new DOM content and:
+   - Removes jQuery click handlers from the Add to Cart button
+   - Attaches native click handler for AJAX add-to-cart
+5. User clicks "Add to Cart":
+   - Button shows "Adding..." and is disabled
+   - `fetch` POST sends form data to `/cart/add/<id>/` with `X-Requested-With: XMLHttpRequest`
+   - Django validates the form and adds to session cart (syncs DB if authenticated)
+   - Django returns JSON: `{success: true, cart_count, cart_total, ...}`
+   - Button shows "Added ✓" for 2 seconds, then resets
+   - Cart count badges and popup subtotal update across the page
+6. **No page redirect occurs** — the user stays on the shop page
+
+### 5. Cart Removal (AJAX Flow)
+1. User clicks the remove button on an item in the header cart dropdown
+2. `cart.js` intercepts the form submit event
+3. `fetch` POST sends to `/cart/remove/<id>/` with `X-Requested-With: XMLHttpRequest`
+4. Django removes the item and returns JSON with updated cart data
+5. The removed item slides out with a CSS animation
+6. Cart count badges and subtotal update
+7. If cart is now empty, an "Your cart is empty" message appears
+
+### 6. Checkout Process
 1. User proceeds to checkout
 2. `orders` app creates Shipping/Billing addresses
 3. Coupon validation via `coupons` app
@@ -284,7 +375,7 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 6. Payment processing via `payments` app (Stripe integration planned)
 7. Order confirmation and email
 
-### 5. Order Management
+### 7. Order Management
 1. Staff views orders via Django admin
 2. Order status updates
 3. Customer can view order history
@@ -300,6 +391,7 @@ Martify is a full-featured eCommerce web application built with Django 5.2.8, ta
 - GET/POST pattern for form submissions
 - **Signal-based event handling**: Cart synchronization uses `user_logged_in`/`user_logged_out` signals
 - **Context processors**: Global cart access via `core/context_processors.py`
+- **AJAX detection**: Views check `request.headers.get('x-requested-with') == 'XMLHttpRequest'` to return JSON instead of redirects
 
 ### Template Structure
 ```
@@ -309,6 +401,7 @@ templates/
 │   ├── index.html (homepage)
 │   ├── category.html (shop page with product grid)
 │   ├── product.html (product detail with related products)
+│   ├── product_quick_view.html (quick-view modal content)
 │   ├── page_about.html (about us page)
 │   ├── contact.html (contact form)
 │   ├── err404.html (404 error page)
@@ -326,13 +419,23 @@ templates/
 - **Global cart access**: All templates have access to `{{ cart }}` via context processor
 - **Dynamic cart count**: Header displays `{{ cart|length }}`
 - **Dynamic cart dropdown**: Base template iterates over cart items with product links
+- **AJAX remove forms**: Cart dropdown items use `<form>` with CSRF for AJAX removal
+- **Quick-view form**: `product_quick_view.html` has `.quickview-cart-form` with quantity input and CSRF
 
 ### Static Files
 ```
 static/
-├── css/
-├── js/
-├── images/
+├── assets/
+│   ├── js/
+│   │   ├── jquery.min.js          → jQuery
+│   │   ├── bootstrap.bundle.min.js → Bootstrap
+│   │   ├── plugins.min.js          → jQuery plugins bundle
+│   │   ├── main.min.js             → Porto theme initialization
+│   │   ├── custom.js               → Martify custom (wishlist, quick-view cart)
+│   │   ├── cart.js                 → AJAX cart remove handlers
+│   │   └── ... (other plugins)
+│   ├── css/
+│   └── images/
 └── ...
 ```
 
@@ -356,6 +459,14 @@ static/
 - `martify/urls.py`: Main URL configuration
 - Each app has its own `urls.py` included via `include()`
 
+**Cart URL Patterns:**
+| Name | Pattern | View |
+|------|---------|------|
+| `cart_detail` | `/cart/` | `cart_detail` |
+| `cart_add` | `/cart/add/<int:product_id>/` | `cart_add` |
+| `cart_remove` | `/cart/remove/<int:product_id>/` | `cart_remove` |
+| `cart_clear` | `/cart/clear/` | `cart_clear` |
+
 ---
 
 ## Current State & Future Plans
@@ -371,10 +482,20 @@ static/
   - Guest cart merges with existing DB cart on first login
   - Empty carts automatically deleted
   - Global cart context processor for templates
+- **AJAX cart operations**:
+  - Add to cart via quick-view modal (no page redirect)
+  - Remove from cart in header dropdown (no page redirect)
+  - Cart count and subtotal updates without reload
+  - Form validation error handling with user feedback
+- **Quick-view product modal**:
+  - Loaded via Magnific Popup AJAX
+  - Product details, image carousel, quantity selector
+  - Add-to-cart with button state feedback
+  - Conflict resolution with `main.min.js` theme handlers
+- Wishlist with AJAX toggle
 - Basic checkout flow
 - Order management
 - Blog functionality
-- Wishlist
 - Coupon system (structure in place)
 
 ### Planned
@@ -404,7 +525,7 @@ static/
 - Debug disabled in production
 - Allowed hosts configured
 - HTTPS enforcement
-- CSRF protection enabled
+- CSRF protection enabled (all AJAX requests include CSRF token)
 - SQL injection protection via Django ORM
 
 ---

@@ -11,7 +11,8 @@ class IndexView(View):
         products = Product.objects.all()[:6]
         new_arrival_products = Product.objects.order_by('created_at')[:6]
         categories = Category.objects.annotate(product_count=Count('product'))
-        blogs = dict(list(BlogView.post.items())[:4]).values()
+        blog_view = BlogView()
+        blogs = dict(list(blog_view.get_blog_posts().items())[:4]).values()
         return render(request, "core/index.html", context={'products': products, 'new_arrival': new_arrival_products, 'categories': categories, 'blogs': blogs})
 
 
@@ -43,6 +44,11 @@ class ProductView(View):
         related_products = Product.objects.filter(
             category=product_details.category
         ).exclude(id=product_details.id)[:4].prefetch_related("category")
+
+        if request.GET.get("quick_view") == "1":
+            return render(request, "core/product_quick_view.html", context={
+                "product_details": product_details,
+            })
 
         return render(request, "core/product.html", context={
             "product_details": product_details,

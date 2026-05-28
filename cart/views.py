@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
@@ -35,7 +36,27 @@ def cart_add(request, product_id):
 
     # AJAX support
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'cart_count': len(cart), 'message': 'Added to cart!'})
+        cart_total = Decimal(str(cart.total_price)).quantize(Decimal('0.01'))
+        cart_discount = Decimal(str(cart.discount)).quantize(Decimal('0.01'))
+        cart_total_after_discount = Decimal(str(cart.total_after_discount)).quantize(Decimal('0.01'))
+        if form.is_valid():
+            return JsonResponse({
+                'success': True,
+                'cart_count': len(cart),
+                'cart_total': str(cart_total),
+                'cart_discount': str(cart_discount),
+                'cart_total_after_discount': str(cart_total_after_discount),
+                'message': 'Product added to cart!',
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors.get('quantity', ['Invalid quantity.']),
+                'cart_count': len(cart),
+                'cart_total': str(cart_total),
+                'cart_discount': str(cart_discount),
+                'cart_total_after_discount': str(cart_total_after_discount),
+            }, status=400)
 
     return redirect('cart_detail')
 
@@ -50,7 +71,16 @@ def cart_remove(request, product_id):
         sync_cart_to_db(request.user, cart)
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'cart_count': len(cart), 'message': 'Removed from cart.'})
+        cart_total = Decimal(str(cart.total_price)).quantize(Decimal('0.01'))
+        cart_discount = Decimal(str(cart.discount)).quantize(Decimal('0.01'))
+        cart_total_after_discount = Decimal(str(cart.total_after_discount)).quantize(Decimal('0.01'))
+        return JsonResponse({
+            'cart_count': len(cart),
+            'cart_total': str(cart_total),
+            'cart_discount': str(cart_discount),
+            'cart_total_after_discount': str(cart_total_after_discount),
+            'message': 'Removed from cart.',
+        })
 
     return redirect('cart_detail')
 
