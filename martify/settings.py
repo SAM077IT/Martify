@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-z3-(obkq9288u18sp*nvs&mz8s#s&-6%^*z5)40u848_)571uj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["martify-6fmz.onrender.com", "localhost"]
 
 
 # Application definition
